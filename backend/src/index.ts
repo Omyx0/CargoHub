@@ -1,0 +1,119 @@
+// ============================================================================
+// CargoHub — Backend Entry Point
+// Express + Socket.io server serving Android, iOS, and Website
+// ============================================================================
+
+import 'dotenv/config';
+import express from 'express';
+import { createServer } from 'http';
+import cors from 'cors';
+import helmet from 'helmet';
+import { Server as SocketServer } from 'socket.io';
+import type { ClientToServerEvents, ServerToClientEvents } from '@cargohub/shared';
+
+import { corsOptions } from './config/cors';
+import { platformMiddleware } from './middleware/platform.middleware';
+import { errorHandler } from './middleware/error.middleware';
+
+// Routes
+import authRoutes from './routes/auth.routes';
+import bookingRoutes from './routes/booking.routes';
+import driverRoutes from './routes/driver.routes';
+import fareRoutes from './routes/fare.routes';
+import paymentRoutes from './routes/payment.routes';
+import ratingRoutes from './routes/rating.routes';
+import adminRoutes from './routes/admin.routes';
+import businessRoutes from './routes/business.routes';
+
+// Socket
+import { setupSocketHandlers } from './socket';
+
+const app = express();
+const httpServer = createServer(app);
+
+// ── Socket.io Setup ─────────────────────────────────────────────────────────
+
+const io = new SocketServer<ClientToServerEvents, ServerToClientEvents>(httpServer, {
+  cors: {
+    origin: [
+      process.env.WEBSITE_URL || 'http://localhost:3000',
+      process.env.WEBSITE_URL_LOCAL || 'http://localhost:3000',
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
+});
+
+// Make io accessible to controllers
+app.set('io', io);
+
+// ── Global Middleware ────────────────────────────────────────────────────────
+
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(platformMiddleware);
+
+// ── Health Check ─────────────────────────────────────────────────────────────
+
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'CargoHub API',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
+// ── API Routes ───────────────────────────────────────────────────────────────
+
+app.use('/api/auth', authRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/drivers', driverRoutes);
+app.use('/api/fare', fareRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/ratings', ratingRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/business', businessRoutes);
+
+// ── 404 Handler ──────────────────────────────────────────────────────────────
+
+app.use((_req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'NOT_FOUND',
+    message: 'The requested endpoint does not exist.',
+  });
+});
+
+// ── Error Handler ────────────────────────────────────────────────────────────
+
+app.use(errorHandler);
+
+// ── Socket.io Handlers ──────────────────────────────────────────────────────
+
+setupSocketHandlers(io);
+
+// ── Start Server ─────────────────────────────────────────────────────────────
+
+const PORT = process.env.PORT || 5000;
+
+httpServer.listen(PORT, () => {
+  console.log(`
+  ╔═══════════════════════════════════════════════════╗
+  ║                                                   ║
+  ║   🚛  CargoHub — Backend API                ║
+  ║                                                   ║
+  ║   Server:    http://localhost:${PORT}               ║
+  ║   Socket.io: ws://localhost:${PORT}                ║
+  ║   Health:    http://localhost:${PORT}/health        ║
+  ║                                                   ║
+  ║   Environment: ${process.env.NODE_ENV || 'development'}              ║
+  ║                                                   ║
+  ╚═══════════════════════════════════════════════════╝
+  `);
+});
+
+export { app, io };
