@@ -39,34 +39,35 @@ export default function BookingPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
+    <div className="min-h-screen bg-mesh bg-grid" style={{ background: "var(--bg-primary)" }}>
       {/* Header */}
       <header className="sticky top-0 z-50 glass" style={{ borderRadius: 0, borderTop: "none", borderLeft: "none", borderRight: "none" }}>
-        <div className="container-wide flex items-center justify-between h-14">
-          <div className="flex items-center gap-3">
-            <a href="/" className="btn-icon" style={{ width: 32, height: 32 }}>
-              <ChevronLeft className="w-4 h-4" />
+        <div className="container-wide flex items-center justify-between h-20">
+          <div className="flex items-center gap-4">
+            <a href="/" className="w-10 h-10 rounded-xl bg-white border border-gray-150 flex items-center justify-center text-gray-700 hover:text-[var(--brand-primary)] hover:border-[var(--brand-primary)] hover:shadow-sm transition-all">
+              <ChevronLeft className="w-5 h-5" />
             </a>
-            <span className="font-display text-lg font-bold">Book a Truck</span>
+            <span className="font-display text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>Book a Truck</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {[1, 2, 3].map((s) => (
-              <div key={s} className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all" style={{
-                  background: step >= s ? "var(--brand-primary)" : "var(--bg-tertiary)",
+              <div key={s} className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-all shadow-sm" style={{
+                  background: step >= s ? "var(--brand-primary)" : "white",
                   color: step >= s ? "white" : "var(--text-muted)",
+                  border: step >= s ? "1px solid var(--brand-primary)" : "1px solid var(--border-subtle)"
                 }}>
-                  {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
+                  {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
                 </div>
-                {s < 3 && <div className="w-8 h-0.5 rounded" style={{ background: step > s ? "var(--brand-primary)" : "var(--border-subtle)" }} />}
+                {s < 3 && <div className="w-10 h-0.5 rounded-full" style={{ background: step > s ? "var(--brand-primary)" : "var(--border-subtle)" }} />}
               </div>
             ))}
           </div>
         </div>
       </header>
 
-      <div className="container-wide py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <div className="container-wide py-12">
+        <div className="grid lg:grid-cols-3 gap-8 items-start">
           {/* Main Content */}
           <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
@@ -77,61 +78,87 @@ export default function BookingPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="card"
+                  className="glass-card p-8"
                 >
-                  <h2 className="font-display text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
-                    📍 Set Pickup & Drop-off
+                  <h2 className="font-display text-2xl font-bold mb-8 flex items-center gap-3" style={{ color: "var(--text-primary)" }}>
+                    <span className="w-8 h-8 rounded-lg bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center text-sm">📍</span>
+                    Set Pickup & Drop-off
                   </h2>
 
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Pickup Location</label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--brand-primary)" }} />
-                        <input
-                          value={pickup}
-                          onChange={(e) => setPickup(e.target.value)}
-                          className="input-field pl-11"
-                          placeholder="Enter pickup address"
-                        />
+                  <div className="space-y-8">
+                    <div className="grid md:grid-cols-2 gap-6 items-center relative">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Pickup Location</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--brand-primary)]" />
+                          <input
+                            value={pickup}
+                            onChange={(e) => setPickup(e.target.value)}
+                            className="input-field pl-12 h-14 bg-white/70"
+                            placeholder="Enter pickup address"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Drop-off Location</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--brand-secondary)]" />
+                          <input
+                            value={drop}
+                            onChange={(e) => setDrop(e.target.value)}
+                            className="input-field pl-12 h-14 bg-white/70"
+                            placeholder="Enter drop-off address"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex justify-center">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)" }}>
-                        <ArrowRight className="w-4 h-4 rotate-90" style={{ color: "var(--text-muted)" }} />
-                      </div>
-                    </div>
+                    {/* Editorial Route Map Mockup Frame */}
+                    <div className="relative rounded-2xl overflow-hidden h-72 border-2 border-dashed border-[#FF6648]/20 bg-[#FFF5EF] flex flex-col items-center justify-center p-6 text-center group hover:border-[#0259DD]/30 transition-all duration-300">
+                      <div className="absolute inset-0 bg-grid opacity-[0.03]" />
+                      
+                      {/* Elegant Map Representation */}
+                      <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
+                        <div className="absolute w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-[#FF6648]/8 to-[#0259DD]/4 filter blur-xl" />
+                        
+                        {/* Interactive route path dot indicator */}
+                        <div className="absolute w-[70%] h-[50%]">
+                          <svg className="w-full h-full" viewBox="0 0 200 100" fill="none">
+                            <path d="M30 65 Q 100 20, 170 45" stroke="#0259DD" strokeWidth="2" strokeDasharray="4 4" />
+                            <circle cx="170" cy="45" r="4.5" fill="#0259DD" />
+                            <circle cx="30" cy="65" r="4.5" fill="#FF6648" />
+                          </svg>
+                        </div>
+                        
+                        {/* Hazratganj Marker label */}
+                        <div className="absolute left-[8%] bottom-[20%] bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#FF6648]" />
+                          <span className="text-[10px] font-bold text-gray-800">Hazratganj</span>
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Drop-off Location</label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: "var(--brand-success)" }} />
-                        <input
-                          value={drop}
-                          onChange={(e) => setDrop(e.target.value)}
-                          className="input-field pl-11"
-                          placeholder="Enter drop-off address"
-                        />
+                        {/* Gomti Nagar Marker label */}
+                        <div className="absolute right-[12%] top-[30%] bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-sm flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#0259DD]" />
+                          <span className="text-[10px] font-bold text-gray-800">Gomti Nagar</span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Mock map placeholder */}
-                    <div className="rounded-xl overflow-hidden h-64 flex items-center justify-center" style={{ background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)" }}>
-                      <div className="text-center">
-                        <Navigation className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--brand-primary)", opacity: 0.5 }} />
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Map will load here with Mapbox GL</p>
-                        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>Estimated distance: <span className="font-mono font-bold" style={{ color: "var(--text-primary)" }}>12.4 km</span></p>
+                      {/* Map information container overlay */}
+                      <div className="relative z-10 bg-white/95 backdrop-blur-sm p-4 rounded-xl border border-gray-100 shadow-md max-w-xs">
+                        <Navigation className="w-8 h-8 mx-auto mb-2 text-[var(--brand-primary)]" />
+                        <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Map Route Preview</h4>
+                        <p className="text-[10px] text-gray-500 mt-1">Route automatically optimized for lowest tolls & quickest delivery time.</p>
+                        <p className="text-[11px] mt-2 font-semibold text-gray-700">Estimated distance: <span className="font-mono font-bold text-[var(--brand-primary)]">12.4 km</span></p>
                       </div>
                     </div>
 
                     <button
                       onClick={() => setStep(2)}
-                      className="btn-primary w-full"
-                      style={{ padding: "14px" }}
+                      className="btn-primary w-full h-14 text-base font-semibold"
                       disabled={!pickup || !drop}
                     >
-                      Continue <ArrowRight className="w-5 h-5" />
+                      Continue <ArrowRight className="w-5 h-5 ml-1" />
                     </button>
                   </div>
                 </motion.div>
@@ -147,27 +174,29 @@ export default function BookingPage() {
                   className="space-y-6"
                 >
                   {/* Vehicle Selection */}
-                  <div className="card">
-                    <h2 className="font-display text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
-                      🚛 Choose Vehicle
+                  <div className="glass-card p-8">
+                    <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-3" style={{ color: "var(--text-primary)" }}>
+                      <span className="w-8 h-8 rounded-lg bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center text-sm">🚛</span>
+                      Choose Vehicle
                     </h2>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {vehicleTypes.map(([type, config]) => (
                         <button
                           key={type}
                           onClick={() => setVehicle(type)}
-                          className="p-4 rounded-xl text-left transition-all"
+                          className="p-5 rounded-2xl text-left transition-all relative overflow-hidden group"
                           style={{
-                            background: vehicle === type ? "rgba(2, 89, 221, 0.1)" : "var(--bg-tertiary)",
-                            border: vehicle === type ? "2px solid var(--brand-primary)" : "2px solid var(--border-subtle)",
+                            background: vehicle === type ? "white" : "rgba(255,255,255,0.4)",
+                            border: vehicle === type ? "2px solid var(--brand-primary)" : "2px solid rgba(255,255,255,0.7)",
+                            boxShadow: vehicle === type ? "0 10px 25px -5px rgba(2, 89, 221, 0.12)" : "none",
                           }}
                         >
-                          <span className="text-3xl block mb-2">{config.icon}</span>
-                          <p className="font-display font-bold" style={{ color: "var(--text-primary)" }}>{config.label}</p>
-                          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{config.description}</p>
-                          <div className="flex items-center justify-between mt-3">
-                            <span className="badge badge-delivered" style={{ fontSize: "10px" }}>{config.capacity}</span>
-                            <span className="font-mono text-sm font-bold" style={{ color: "var(--brand-primary-light)" }}>₹{config.baseFare}+</span>
+                          <span className="text-4xl block mb-3">{config.icon}</span>
+                          <p className="font-display font-bold text-lg" style={{ color: "var(--text-primary)" }}>{config.label}</p>
+                          <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-secondary)" }}>{config.description}</p>
+                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100/60">
+                            <span className="badge font-semibold" style={{ background: "rgba(2, 89, 221, 0.08)", color: "var(--brand-primary)", fontSize: "10px" }}>{config.capacity}</span>
+                            <span className="font-mono text-sm font-bold" style={{ color: "var(--brand-primary)" }}>₹{config.baseFare}+</span>
                           </div>
                         </button>
                       ))}
@@ -175,25 +204,27 @@ export default function BookingPage() {
                   </div>
 
                   {/* Load Type */}
-                  <div className="card">
-                    <h2 className="font-display text-xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-                      📦 What are you shipping?
+                  <div className="glass-card p-8">
+                    <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-3" style={{ color: "var(--text-primary)" }}>
+                      <span className="w-8 h-8 rounded-lg bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center text-sm">📦</span>
+                      What are you shipping?
                     </h2>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {loadTypes.map(([type, config]) => (
                         <button
                           key={type}
                           onClick={() => setLoadType(type)}
-                          className="p-3 rounded-xl text-center transition-all"
+                          className="p-4 rounded-xl text-center transition-all flex flex-col items-center justify-center"
                           style={{
-                            background: loadType === type ? "rgba(2, 89, 221, 0.1)" : "var(--bg-tertiary)",
-                            border: loadType === type ? "2px solid var(--brand-primary)" : "2px solid var(--border-subtle)",
+                            background: loadType === type ? "white" : "rgba(255,255,255,0.4)",
+                            border: loadType === type ? "2px solid var(--brand-primary)" : "2px solid rgba(255,255,255,0.7)",
+                            boxShadow: loadType === type ? "0 4px 12px rgba(2, 89, 221, 0.08)" : "none",
                           }}
                         >
-                          <span className="text-2xl block mb-1">{config.icon}</span>
-                          <p className="text-xs font-medium" style={{ color: loadType === type ? "var(--brand-primary-light)" : "var(--text-secondary)" }}>{config.label}</p>
+                          <span className="text-3xl block mb-2">{config.icon}</span>
+                          <p className="text-xs font-semibold" style={{ color: loadType === type ? "var(--brand-primary)" : "var(--text-secondary)" }}>{config.label}</p>
                           {config.surchargePercent > 0 && (
-                            <p className="text-xs mt-1 font-mono" style={{ color: "var(--brand-accent)" }}>+{config.surchargePercent}%</p>
+                            <p className="text-[10px] mt-1 font-mono font-bold" style={{ color: "var(--brand-accent)" }}>+{config.surchargePercent}% surcharge</p>
                           )}
                         </button>
                       ))}
@@ -201,31 +232,31 @@ export default function BookingPage() {
                   </div>
 
                   {/* Helpers */}
-                  <div className="card">
-                    <div className="flex items-center justify-between">
+                  <div className="glass-card p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div>
-                        <h2 className="font-display text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+                        <h2 className="font-display text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                           👷 Need Helpers?
                         </h2>
-                        <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+                        <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
                           ₹{FARE_CONSTANTS.HELPER_CHARGE_PER_PERSON} per helper for loading/unloading
                         </p>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 bg-white/60 p-2 rounded-xl border border-white/80 self-end md:self-auto">
                         <button
                           onClick={() => setHelpers(Math.max(0, helpers - 1))}
-                          className="btn-icon"
+                          className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:text-[var(--brand-primary)] transition-all"
                           disabled={helpers === 0}
-                          style={{ opacity: helpers === 0 ? 0.3 : 1 }}
+                          style={{ opacity: helpers === 0 ? 0.4 : 1 }}
                         >
                           <Minus className="w-4 h-4" />
                         </button>
                         <span className="font-mono text-2xl font-bold w-8 text-center" style={{ color: "var(--text-primary)" }}>{helpers}</span>
                         <button
                           onClick={() => setHelpers(Math.min(3, helpers + 1))}
-                          className="btn-icon"
+                          className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:text-[var(--brand-primary)] transition-all"
                           disabled={helpers === 3}
-                          style={{ opacity: helpers === 3 ? 0.3 : 1 }}
+                          style={{ opacity: helpers === 3 ? 0.4 : 1 }}
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -234,11 +265,11 @@ export default function BookingPage() {
                   </div>
 
                   <div className="flex gap-4">
-                    <button onClick={() => setStep(1)} className="btn-secondary flex-1" style={{ padding: "14px" }}>
+                    <button onClick={() => setStep(1)} className="btn-secondary flex-1 h-14 font-semibold" style={{ padding: "14px" }}>
                       Back
                     </button>
-                    <button onClick={handleCalculateFare} className="btn-primary flex-1" style={{ padding: "14px" }}>
-                      Get Fare Estimate <ArrowRight className="w-5 h-5" />
+                    <button onClick={handleCalculateFare} className="btn-primary flex-1 h-14 font-semibold" style={{ padding: "14px" }}>
+                      Get Fare Estimate <ArrowRight className="w-5 h-5 ml-1" />
                     </button>
                   </div>
                 </motion.div>
@@ -251,53 +282,54 @@ export default function BookingPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="card"
+                  className="glass-card p-8"
                 >
-                  <h2 className="font-display text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>
-                    ✅ Confirm Booking
+                  <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-3" style={{ color: "var(--text-primary)" }}>
+                    <span className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-sm">✓</span>
+                    Confirm Booking
                   </h2>
 
                   {/* Route summary */}
-                  <div className="p-4 rounded-xl mb-6" style={{ background: "var(--bg-tertiary)" }}>
+                  <div className="p-5 rounded-2xl mb-6 border border-gray-150" style={{ background: "rgba(255,255,255,0.4)" }}>
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-3 h-3 rounded-full mt-1 flex-shrink-0" style={{ background: "var(--brand-primary)" }} />
+                      <div className="w-3.5 h-3.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: "var(--brand-primary)" }} />
                       <div>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>PICKUP</p>
-                        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{pickup}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>PICKUP</p>
+                        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{pickup}</p>
                       </div>
                     </div>
-                    <div className="w-px h-4 ml-1.5" style={{ background: "var(--border-subtle)" }} />
+                    <div className="w-px h-6 ml-1.5 border-l-2 border-dashed border-gray-300" />
                     <div className="flex items-start gap-3 mt-3">
-                      <div className="w-3 h-3 rounded-full mt-1 flex-shrink-0" style={{ background: "var(--brand-success)" }} />
+                      <div className="w-3.5 h-3.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: "var(--brand-secondary)" }} />
                       <div>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>DROP-OFF</p>
-                        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{drop}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>DROP-OFF</p>
+                        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{drop}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Booking details */}
                   <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="text-center p-3 rounded-xl" style={{ background: "var(--bg-tertiary)" }}>
-                      <span className="text-2xl block mb-1">{VEHICLE_CONFIG[vehicle].icon}</span>
-                      <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>{VEHICLE_CONFIG[vehicle].label}</p>
+                    <div className="text-center p-4 rounded-xl border border-gray-150" style={{ background: "rgba(255,255,255,0.4)" }}>
+                      <span className="text-3xl block mb-1">{VEHICLE_CONFIG[vehicle].icon}</span>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-2">{VEHICLE_CONFIG[vehicle].label}</p>
                     </div>
-                    <div className="text-center p-3 rounded-xl" style={{ background: "var(--bg-tertiary)" }}>
-                      <span className="text-2xl block mb-1">{LOAD_CONFIG[loadType].icon}</span>
-                      <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>{LOAD_CONFIG[loadType].label}</p>
+                    <div className="text-center p-4 rounded-xl border border-gray-150" style={{ background: "rgba(255,255,255,0.4)" }}>
+                      <span className="text-3xl block mb-1">{LOAD_CONFIG[loadType].icon}</span>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-2">{LOAD_CONFIG[loadType].label}</p>
                     </div>
-                    <div className="text-center p-3 rounded-xl" style={{ background: "var(--bg-tertiary)" }}>
-                      <span className="text-2xl block mb-1">👷</span>
-                      <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>{helpers} helper{helpers !== 1 ? "s" : ""}</p>
+                    <div className="text-center p-4 rounded-xl border border-gray-150" style={{ background: "rgba(255,255,255,0.4)" }}>
+                      <span className="text-3xl block mb-1">👷</span>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-2">{helpers} helper{helpers !== 1 ? "s" : ""}</p>
                     </div>
                   </div>
 
                   {/* Fare breakdown */}
-                  <div className="rounded-xl p-4 space-y-3 mb-6" style={{ background: "var(--bg-tertiary)", border: "1px solid var(--border-subtle)" }}>
-                    <h3 className="font-display text-sm font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+                  <div className="rounded-2xl p-5 space-y-4 mb-6 border border-gray-150" style={{ background: "rgba(255,255,255,0.5)" }}>
+                    <h3 className="font-display text-sm font-bold flex items-center gap-2 pb-2 border-b border-gray-100" style={{ color: "var(--text-primary)" }}>
                       <IndianRupee className="w-4 h-4" /> Fare Breakdown
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {[
                         { label: "Base fare", value: fare.base },
                         { label: `Distance (${fare.distanceKm} km)`, value: fare.distanceCharge },
@@ -306,40 +338,40 @@ export default function BookingPage() {
                       ].map((item) => (
                         <div key={item.label} className="flex items-center justify-between">
                           <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{item.label}</span>
-                          <span className="font-mono text-sm" style={{ color: "var(--text-primary)" }}>{formatCurrency(item.value)}</span>
+                          <span className="font-mono text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{formatCurrency(item.value)}</span>
                         </div>
                       ))}
                       {fare.surgeMultiplier > 1 && (
                         <div className="flex items-center justify-between">
-                          <span className="text-sm flex items-center gap-1" style={{ color: "var(--brand-accent)" }}>
+                          <span className="text-sm flex items-center gap-1 font-semibold" style={{ color: "var(--brand-accent)" }}>
                             <Zap className="w-3.5 h-3.5" /> Surge ({fare.surgeMultiplier}x)
                           </span>
-                          <span className="font-mono text-sm" style={{ color: "var(--brand-accent)" }}>Applied</span>
+                          <span className="font-mono text-sm font-semibold" style={{ color: "var(--brand-accent)" }}>Applied</span>
                         </div>
                       )}
                       <div className="divider" />
                       <div className="flex items-center justify-between">
                         <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Subtotal</span>
-                        <span className="font-mono text-sm" style={{ color: "var(--text-primary)" }}>{formatCurrency(fare.subtotal)}</span>
+                        <span className="font-mono text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{formatCurrency(fare.subtotal)}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm" style={{ color: "var(--text-secondary)" }}>GST (18%)</span>
-                        <span className="font-mono text-sm" style={{ color: "var(--text-primary)" }}>{formatCurrency(fare.gst)}</span>
+                        <span className="font-mono text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{formatCurrency(fare.gst)}</span>
                       </div>
                       <div className="divider" />
                       <div className="flex items-center justify-between">
-                        <span className="font-bold" style={{ color: "var(--text-primary)" }}>Total</span>
-                        <span className="font-mono text-xl font-bold gradient-text">{formatCurrency(fare.total)}</span>
+                        <span className="font-bold text-gray-800" style={{ color: "var(--text-primary)" }}>Total</span>
+                        <span className="font-mono text-2xl font-extrabold text-[var(--brand-primary)]">{formatCurrency(fare.total)}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-4">
-                    <button onClick={() => setStep(2)} className="btn-secondary flex-1" style={{ padding: "14px" }}>
+                    <button onClick={() => setStep(2)} className="btn-secondary flex-1 h-14 font-semibold" style={{ padding: "14px" }}>
                       Back
                     </button>
-                    <button className="btn-primary flex-1" style={{ padding: "14px" }}>
-                      Confirm Booking <ArrowRight className="w-5 h-5" />
+                    <button className="btn-primary flex-1 h-14 font-semibold" style={{ padding: "14px" }}>
+                      Confirm Booking <ArrowRight className="w-5 h-5 ml-1" />
                     </button>
                   </div>
                 </motion.div>
@@ -349,47 +381,47 @@ export default function BookingPage() {
 
           {/* Sidebar Summary */}
           <div className="hidden lg:block">
-            <div className="card sticky top-20">
-              <h3 className="font-display text-lg font-bold mb-4" style={{ color: "var(--text-primary)" }}>Booking Summary</h3>
+            <div className="glass-card p-6 sticky top-28">
+              <h3 className="font-display text-lg font-bold mb-4 pb-2 border-b border-gray-100" style={{ color: "var(--text-primary)" }}>Booking Summary</h3>
 
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "var(--brand-primary)" }} />
+                  <MapPin className="w-4 h-4 flex-shrink-0 text-[var(--brand-primary)]" />
                   <div className="min-w-0">
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>From</p>
-                    <p className="text-sm truncate" style={{ color: "var(--text-primary)" }}>{pickup || "—"}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>From</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{pickup || "—"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: "var(--brand-success)" }} />
+                  <MapPin className="w-4 h-4 flex-shrink-0 text-[var(--brand-secondary)]" />
                   <div className="min-w-0">
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>To</p>
-                    <p className="text-sm truncate" style={{ color: "var(--text-primary)" }}>{drop || "—"}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>To</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{drop || "—"}</p>
                   </div>
                 </div>
 
                 <div className="divider" />
 
                 <div className="flex items-center gap-3">
-                  <Truck className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
-                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{VEHICLE_CONFIG[vehicle].label}</span>
+                  <Truck className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{VEHICLE_CONFIG[vehicle].label}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Package className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
-                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{LOAD_CONFIG[loadType].label}</span>
+                  <Package className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{LOAD_CONFIG[loadType].label}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Users className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
-                  <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{helpers} helper{helpers !== 1 ? "s" : ""}</span>
+                  <Users className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>{helpers} helper{helpers !== 1 ? "s" : ""}</span>
                 </div>
 
                 {fare && (
                   <>
                     <div className="divider" />
-                    <div className="p-4 rounded-xl text-center" style={{ background: "linear-gradient(135deg, rgba(2, 89, 221, 0.1), rgba(132, 175, 251, 0.05))" }}>
-                      <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>ESTIMATED TOTAL</p>
-                      <p className="font-mono text-3xl font-bold gradient-text">{formatCurrency(fare.total)}</p>
-                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>incl. 18% GST</p>
+                    <div className="p-4 rounded-xl text-center border border-[#0259DD]/20 bg-[#0259DD]/5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">ESTIMATED TOTAL</p>
+                      <p className="font-mono text-3xl font-extrabold text-[var(--brand-primary)]">{formatCurrency(fare.total)}</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-1">incl. 18% GST & Tolls</p>
                     </div>
                   </>
                 )}
