@@ -23,11 +23,11 @@ export const JobScreen = () => {
   return (
     <View style={styles.container}>
       <Header title="Active Job" />
-      <MapView provider={PROVIDER_GOOGLE} style={styles.map} initialRegion={{ latitude: (activeBooking.pickupLat + activeBooking.dropLat) / 2, longitude: (activeBooking.pickupLng + activeBooking.dropLng) / 2, latitudeDelta: Math.abs(activeBooking.pickupLat - activeBooking.dropLat) * 2 || 0.1, longitudeDelta: Math.abs(activeBooking.pickupLng - activeBooking.dropLng) * 2 || 0.1 }}>
+      {/* <MapView provider={PROVIDER_GOOGLE} style={styles.map} initialRegion={{ latitude: (activeBooking.pickupLat + activeBooking.dropLat) / 2, longitude: (activeBooking.pickupLng + activeBooking.dropLng) / 2, latitudeDelta: Math.abs(activeBooking.pickupLat - activeBooking.dropLat) * 2 || 0.1, longitudeDelta: Math.abs(activeBooking.pickupLng - activeBooking.dropLng) * 2 || 0.1 }}>
         <Marker coordinate={{ latitude: activeBooking.pickupLat, longitude: activeBooking.pickupLng }}><View style={[styles.marker, { backgroundColor: theme.colors.brand.primary }]}><MapPin size={16} color="white" /></View></Marker>
         <Marker coordinate={{ latitude: activeBooking.dropLat, longitude: activeBooking.dropLng }}><View style={[styles.marker, { backgroundColor: theme.colors.brand.secondary }]}><NavIcon size={16} color="white" /></View></Marker>
         {driver?.currentLat && driver?.currentLng && <Marker coordinate={{ latitude: driver.currentLat, longitude: driver.currentLng }}><View style={[styles.marker, styles.driverMarker]} /></Marker>}
-      </MapView>
+      </MapView> */}
       <View style={styles.bottomSheet}>
         <StepIndicator currentStep={step} />
         <View style={styles.customerCard}>

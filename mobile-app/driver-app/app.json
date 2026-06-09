@@ -48,8 +48,7 @@
           "photosPermission": "The app accesses your photos to let you upload KYC documents."
         }
       ],
-      "expo-font",
-      "expo-splash-screen"
+      "expo-font"
     ]
   }
 }

@@ -23,13 +23,13 @@ export const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      {location && (
+      {/* location && (
         <MapView provider={PROVIDER_GOOGLE} style={styles.map} initialRegion={{ latitude: location.coords.latitude, longitude: location.coords.longitude, latitudeDelta: 0.05, longitudeDelta: 0.05 }} showsUserLocation={false}>
           <Marker coordinate={{ latitude: location.coords.latitude, longitude: location.coords.longitude }}>
             <View style={styles.markerContainer}><Truck color="white" size={20} /></View>
           </Marker>
         </MapView>
-      )}
+      ) */}
       <View style={styles.header}>
         <View style={styles.statusCard}>
           <View>
