@@ -1,23 +1,26 @@
-// ============================================================================
-// Error Handler Middleware
-// Global error handler — catches unhandled errors
-// ============================================================================
-
 import type { Request, Response, NextFunction } from 'express';
+import * as Sentry from '@sentry/node';
 
 export const errorHandler = (
-  err: Error,
-  _req: Request,
+  err: any,
+  req: Request,
   res: Response,
-  _next: NextFunction
+  next: NextFunction
 ): void => {
-  console.error('Unhandled error:', err);
+  console.error('Error:', err);
+  
+  // Capture exception in Sentry
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err);
+  }
+
+  if (res.headersSent) {
+    return next(err);
+  }
 
   res.status(500).json({
     success: false,
     error: 'INTERNAL_SERVER_ERROR',
-    message: process.env.NODE_ENV === 'production'
-      ? 'An unexpected error occurred.'
-      : err.message,
+    message: err.message || 'An unexpected error occurred.',
   });
 };

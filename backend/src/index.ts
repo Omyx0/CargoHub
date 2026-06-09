@@ -14,6 +14,11 @@ import type { ClientToServerEvents, ServerToClientEvents } from './shared';
 import { corsOptions } from './config/cors';
 import { platformMiddleware } from './middlewares/platform.middleware';
 import { errorHandler } from './middlewares/error.middleware';
+import { arcjetMiddleware } from './middlewares/security.middleware';
+import { initSentry } from './config/services';
+
+// Initialize Sentry early
+initSentry();
 
 // Routes
 import authRoutes from './api/auth.routes';
@@ -24,6 +29,7 @@ import paymentRoutes from './api/payment.routes';
 import ratingRoutes from './api/rating.routes';
 import adminRoutes from './api/admin.routes';
 import businessRoutes from './api/business.routes';
+import aiRoutes from './api/ai.routes';
 
 // Socket
 import { setupSocketHandlers } from './sockets';
@@ -50,11 +56,18 @@ app.set('io', io);
 
 // ── Global Middleware ────────────────────────────────────────────────────────
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(arcjetMiddleware); // Rate limiting and bot protection
 app.use(platformMiddleware);
+
+// Serve static files for testing UI
+app.use(express.static('public'));
 
 // ── Health Check ─────────────────────────────────────────────────────────────
 
@@ -77,6 +90,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/business', businessRoutes);
+app.use('/api/ai', aiRoutes);
 
 // ── 404 Handler ──────────────────────────────────────────────────────────────
 

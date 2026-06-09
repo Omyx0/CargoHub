@@ -1,10 +1,5 @@
-// ============================================================================
-// Firebase Token Verification Middleware
-// Mock implementation — accepts X-Mock-UID header for development
-// Replace with real Firebase Admin SDK verification in production
-// ============================================================================
-
 import type { Request, Response, NextFunction } from 'express';
+import { auth } from '../config/firebase';
 import { db } from '../config/database';
 
 export const verifyFirebaseToken = async (
@@ -12,52 +7,65 @@ export const verifyFirebaseToken = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Development mode: accept mock UID header
-  const mockUid = req.headers['x-mock-uid'] as string;
   const authHeader = req.headers.authorization;
 
-  let uid: string | null = null;
-
-  if (mockUid) {
-    // Dev mode — use mock UID directly
-    uid = mockUid;
-  } else if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    // In production: const decodedToken = await admin.auth().verifyIdToken(token);
-    // For dev: treat the token as the UID
-    uid = token;
+  // Test mode bypass
+  if (process.env.NODE_ENV === 'test' || process.env.TEST_MODE === 'true') {
+    const mockUid = req.headers['x-mock-uid'] as string;
+    if (mockUid) {
+      req.user = { uid: mockUid, role: (req.headers['x-mock-role'] as 'USER' | 'DRIVER' | 'ADMIN') || 'USER', accountType: 'STANDARD', isActive: true };
+      return next();
+    }
   }
 
-  if (!uid) {
+  if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({
       success: false,
       error: 'UNAUTHORIZED',
-      message: 'Missing Bearer token or X-Mock-UID header.',
+      message: 'Missing Bearer token.',
     });
     return;
   }
 
-  // Look up user in database
-  const user = db.users.findByFirebaseUid(uid);
+  const token = authHeader.split(' ')[1];
 
-  if (!user) {
+  if (!auth) {
+    res.status(500).json({ success: false, error: 'FIREBASE_NOT_CONFIGURED' });
+    return;
+  }
+
+  try {
+    const decodedToken = await auth.verifyIdToken(token);
+    const uid = decodedToken.uid;
+
+    // Look up user in database
+    const user = await db.users.findByFirebaseUid(uid);
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        error: 'USER_NOT_FOUND',
+        message: 'No user found for this authentication token.',
+      });
+      return;
+    }
+
+    // Attach user to request
+    const driver = await db.drivers.findByFirebaseUid(uid);
+    req.user = {
+      uid: user.firebaseUid,
+      role: user.role,
+      accountType: user.accountType,
+      kycStatus: driver?.kycStatus,
+      isActive: user.isActive,
+    };
+
+    next();
+  } catch (error) {
     res.status(401).json({
       success: false,
-      error: 'USER_NOT_FOUND',
-      message: 'No user found for this authentication token.',
+      error: 'INVALID_TOKEN',
+      message: 'The provided authentication token is invalid or expired.',
     });
-    return;
   }
-
-  // Attach user to request
-  const driver = db.drivers.findByFirebaseUid(uid);
-  req.user = {
-    uid: user.firebaseUid,
-    role: user.role,
-    accountType: user.accountType,
-    kycStatus: driver?.kycStatus,
-    isActive: user.isActive,
-  };
-
-  next();
 };

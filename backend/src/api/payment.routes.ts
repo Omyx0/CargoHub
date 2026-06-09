@@ -4,8 +4,9 @@
 // ============================================================================
 
 import { Router } from 'express';
-import { v4 as uuid } from 'uuid';
+import crypto from 'crypto';
 import { db } from '../config/database';
+import { razorpay } from '../config/services';
 import { verifyFirebaseToken } from '../middlewares/auth.middleware';
 import { requireRole } from '../middlewares/role.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -18,43 +19,55 @@ router.post('/create-order',
   verifyFirebaseToken,
   requireRole('USER'),
   validate(CreatePaymentOrderSchema),
-  (req, res) => {
-    const booking = db.bookings.findById(req.body.bookingId);
+  async (req, res) => {
+    try {
+      const booking = await db.bookings.findById(req.body.bookingId);
 
-    if (!booking) {
-      res.status(404).json({ success: false, error: 'BOOKING_NOT_FOUND' });
-      return;
-    }
+      if (!booking) {
+        res.status(404).json({ success: false, error: 'BOOKING_NOT_FOUND' });
+        return;
+      }
 
-    if (booking.userId !== req.user!.uid) {
-      res.status(403).json({ success: false, error: 'FORBIDDEN' });
-      return;
-    }
+      if (booking.userId !== req.user!.uid) {
+        res.status(403).json({ success: false, error: 'FORBIDDEN' });
+        return;
+      }
 
-    if (booking.status !== 'DELIVERED') {
-      res.status(400).json({
-        success: false,
-        error: 'BOOKING_NOT_DELIVERED',
-        message: 'Payment can only be made after delivery.',
+      if (booking.status !== 'DELIVERED') {
+        res.status(400).json({
+          success: false,
+          error: 'BOOKING_NOT_DELIVERED',
+          message: 'Payment can only be made after delivery.',
+        });
+        return;
+      }
+
+      const amount = booking.finalFare || booking.fareEstimate;
+
+      // Actual Razorpay order creation
+      const options = {
+        amount: Math.round(amount * 100), // amount in the smallest currency unit
+        currency: "INR",
+        receipt: `receipt_${booking.id.substring(0, 10)}`
+      };
+      
+      const order = await razorpay.orders.create(options);
+
+      await db.bookings.update(booking.id, { paymentStatus: 'PENDING' });
+
+      res.json({
+        success: true,
+        data: {
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          bookingId: booking.id,
+        },
       });
-      return;
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: 'INTERNAL_SERVER_ERROR' });
     }
-
-    // Mock Razorpay order creation
-    const orderId = `order_${uuid().replace(/-/g, '').slice(0, 14)}`;
-    const amount = booking.finalFare || booking.fareEstimate;
-
-    db.bookings.update(booking.id, { paymentStatus: 'PENDING' });
-
-    res.json({
-      success: true,
-      data: {
-        orderId,
-        amount: amount * 100, // Razorpay uses paise
-        currency: 'INR',
-        bookingId: booking.id,
-      },
-    });
   }
 );
 
@@ -63,42 +76,76 @@ router.post('/verify',
   verifyFirebaseToken,
   requireRole('USER'),
   validate(VerifyPaymentSchema),
-  (req, res) => {
-    // In production: verify HMAC-SHA256 signature with Razorpay secret
-    // For dev: auto-approve
-    const orderId = req.body.razorpay_order_id;
+  async (req, res) => {
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+      const secret = process.env.RAZORPAY_KEY_SECRET;
 
-    // Find booking by looking through all bookings
-    const allBookings = db.bookings.getAll();
-    const booking = allBookings.data.find(b => b.paymentStatus === 'PENDING' && b.userId === req.user!.uid);
+      if (!secret) {
+        res.status(500).json({ success: false, error: 'CONFIG_ERROR' });
+        return;
+      }
 
-    if (booking) {
-      db.bookings.update(booking.id, {
-        paymentStatus: 'PAID',
-        finalFare: booking.finalFare || booking.fareEstimate,
+      const generatedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(razorpay_order_id + "|" + razorpay_payment_id)
+        .digest('hex');
+
+      if (generatedSignature !== razorpay_signature) {
+        res.status(400).json({ success: false, error: 'INVALID_SIGNATURE' });
+        return;
+      }
+
+      // Find booking 
+      const allBookings = await db.bookings.findByUserId(req.user!.uid);
+      const booking = allBookings.data.find(b => b.paymentStatus === 'PENDING');
+
+      if (booking) {
+        await db.bookings.update(booking.id, {
+          paymentStatus: 'PAID',
+          finalFare: booking.finalFare || booking.fareEstimate,
+        });
+
+        // Emit payment confirmation
+        const io = req.app.get('io');
+        io.to(`booking:${booking.id}`).emit('booking:status', {
+          bookingId: booking.id,
+          status: booking.status,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Payment verified successfully.',
+        data: { paymentId: razorpay_payment_id },
       });
-
-      // Emit payment confirmation
-      const io = req.app.get('io');
-      io.to(`booking:${booking.id}`).emit('booking:status', {
-        bookingId: booking.id,
-        status: booking.status,
-        timestamp: new Date().toISOString(),
-      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: 'INTERNAL_SERVER_ERROR' });
     }
-
-    res.json({
-      success: true,
-      message: 'Payment verified successfully.',
-      data: { paymentId: req.body.razorpay_payment_id },
-    });
   }
 );
 
 // Razorpay webhook (server-to-server, no auth)
 router.post('/webhook', (req, res) => {
-  // In production: verify x-razorpay-signature header
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  
+  if (secret) {
+    const signature = req.headers['x-razorpay-signature'] as string;
+    const generatedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(JSON.stringify(req.body))
+      .digest('hex');
+
+    if (generatedSignature !== signature) {
+      res.status(400).send('Invalid signature');
+      return;
+    }
+  }
+
   console.log('Razorpay webhook received:', req.body.event);
+  // Handle webhook events (payment.captured, etc.)
   res.json({ status: 'ok' });
 });
 

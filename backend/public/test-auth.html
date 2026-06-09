@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CargoHub Auth Testing</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background: #f5f5f5; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    input { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    button { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    pre { background: #333; color: #fff; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+  </style>
+</head>
+<body>
+
+  <h1>CargoHub Authentication Tester</h1>
+
+  <div class="card" id="config-section">
+    <h2>1. Firebase Configuration</h2>
+    <p>Enter your Firebase Client Configuration. You can find this in your Firebase Console under Project Settings -> General -> Web App.</p>
+    <input type="text" id="apiKey" placeholder="apiKey (e.g. AIzaSyB...)">
+    <input type="text" id="authDomain" placeholder="authDomain (e.g. cargo-hub.firebaseapp.com)">
+    <input type="text" id="projectId" placeholder="projectId (e.g. cargo-hub-app)">
+    <button onclick="initFirebase()">Initialize Auth</button>
+  </div>
+
+  <div class="card" id="auth-section" style="display:none;">
+    <h2>2. Login (Google / Phone)</h2>
+    <div id="firebaseui-auth-container"></div>
+  </div>
+
+  <div class="card" id="result-section" style="display:none;">
+    <h2>3. Backend Verification Result</h2>
+    <p>Logged in successfully! Sent Bearer Token to Backend <code>/api/auth/me</code>:</p>
+    <pre id="backend-response">Loading backend response...</pre>
+    <br>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    // Load saved config
+    document.getElementById('apiKey').value = localStorage.getItem('fb_apiKey') || '';
+    document.getElementById('authDomain').value = localStorage.getItem('fb_authDomain') || '';
+    document.getElementById('projectId').value = localStorage.getItem('fb_projectId') || '';
+
+    let ui;
+
+    function initFirebase() {
+      const config = {
+        apiKey: document.getElementById('apiKey').value,
+        authDomain: document.getElementById('authDomain').value,
+        projectId: document.getElementById('projectId').value,
+      };
+
+      if (!config.apiKey || !config.authDomain || !config.projectId) {
+        return alert('Please fill in all fields.');
+      }
+
+      // Save to localStorage for convenience
+      localStorage.setItem('fb_apiKey', config.apiKey);
+      localStorage.setItem('fb_authDomain', config.authDomain);
+      localStorage.setItem('fb_projectId', config.projectId);
+
+      // Init Firebase
+      if (!firebase.apps.length) {
+        firebase.initializeApp(config);
+      }
+
+      document.getElementById('config-section').style.display = 'none';
+      document.getElementById('auth-section').style.display = 'block';
+
+      // Init FirebaseUI
+      ui = new firebaseui.auth.AuthUI(firebase.auth());
+
+      const uiConfig = {
+        callbacks: {
+          signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+            handleLoginSuccess(authResult.user);
+            return false;
+          }
+        },
+        signInFlow: 'popup',
+        signInOptions: [
+          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+          {
+            provider: firebase.auth.PhoneAuthProvider.PROVIDER_ID,
+            defaultCountry: 'IN'
+          }
+        ]
+      };
+      
+      ui.start('#firebaseui-auth-container', uiConfig);
+
+      // Listen for auth state changes (e.g., if already logged in)
+      firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+          handleLoginSuccess(user);
+        }
+      });
+    }
+
+    async function handleLoginSuccess(user) {
+      document.getElementById('auth-section').style.display = 'none';
+      document.getElementById('result-section').style.display = 'block';
+      
+      try {
+        const token = await user.getIdToken();
+        
+        // Test backend endpoint
+        const response = await fetch('/api/auth/me', {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        
+        const data = await response.json();
+        
+        // Display result
+        document.getElementById('backend-response').innerText = 
+          "Token verification successful!\n\nBackend Response:\n" + JSON.stringify(data, null, 2);
+          
+      } catch (e) {
+        document.getElementById('backend-response').innerText = "Error verifying with backend:\n" + e.message;
+      }
+    }
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.reload();
+      });
+    }
+  </script>
+</body>
+</html>
