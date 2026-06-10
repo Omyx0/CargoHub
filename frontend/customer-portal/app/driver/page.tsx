@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuthStore } from "@/store/authStore";
+import { auth as firebaseAuth } from "@/lib/firebase";
+import { io, Socket } from "socket.io-client";
 import {
   Truck, MapPin, Power, IndianRupee, Star, Clock,
   Package, ArrowRight, ChevronLeft, Navigation,
   CheckCircle2, AlertTriangle, Upload, FileText,
   TrendingUp, Calendar, Activity, Smartphone, Camera,
   Bell, MapIcon, Zap, CreditCard, MessageSquare, Database,
-  Shield, Cloud, Lock, GitBranch,
+  Shield, Cloud, Lock, GitBranch, Loader2, X
 } from "lucide-react";
 
 const mockEarnings = {
@@ -159,8 +162,105 @@ function StepCard({ step, index }: { step: WorkflowStep; index: number }) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DriverDashboard() {
+  const { user } = useAuthStore();
   const [isOnline, setIsOnline] = useState(true);
   const [activeTab, setActiveTab] = useState<"dashboard" | "earnings" | "kyc" | "workflow">("dashboard");
+  const [earnings, setEarnings] = useState(mockEarnings);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [incomingBooking, setIncomingBooking] = useState<any>(null);
+  const [activeBooking, setActiveBooking] = useState<any>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    if (!user || !firebaseAuth.currentUser) return;
+
+    // Connect Socket.io
+    const socket = io("ws://localhost:5000", {
+      auth: { token: user.firebaseUid }
+    });
+    socketRef.current = socket;
+
+    socket.on("booking:new", (booking: any) => {
+      setIncomingBooking(booking);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
+
+  const handleAcceptBooking = () => {
+    if (incomingBooking && socketRef.current) {
+      socketRef.current.emit("booking:accept", { bookingId: incomingBooking.id });
+      alert("Booking Accepted!");
+      setActiveBooking(incomingBooking);
+      setIncomingBooking(null);
+    }
+  };
+
+  const handleCancelBooking = () => {
+    if (confirm("Are you sure you want to cancel this booking? This may affect your rating.")) {
+      // Typically call an API to cancel
+      setActiveBooking(null);
+      alert("Booking Cancelled");
+    }
+  };
+
+  const handleCompleteBooking = () => {
+    // Typically call an API to complete
+    setActiveBooking(null);
+    alert("Trip Completed! Earnings updated.");
+  };
+
+  useEffect(() => {
+    // Attempt to fetch real earnings if authenticated
+    const fetchEarnings = async () => {
+      if (!user || !firebaseAuth.currentUser) return;
+      try {
+        const token = await firebaseAuth.currentUser.getIdToken();
+        const res = await fetch(`http://localhost:5000/api/drivers/${user.firebaseUid}/earnings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setEarnings(json.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch earnings, using mock data", err);
+      }
+    };
+    fetchEarnings();
+  }, [user]);
+
+  const toggleAvailability = async () => {
+    const newStatus = !isOnline;
+    setIsOnline(newStatus); // optimistic update
+
+    if (user && firebaseAuth.currentUser) {
+      try {
+        setStatusLoading(true);
+        const token = await firebaseAuth.currentUser.getIdToken();
+        const res = await fetch("http://localhost:5000/api/drivers/availability", {
+          method: "PATCH",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify({ available: newStatus })
+        });
+        const json = await res.json();
+        if (!json.success) {
+          setIsOnline(!newStatus); // revert on failure
+          alert(json.error || "Failed to update availability");
+        }
+      } catch (err) {
+        console.error("Availability update failed", err);
+        setIsOnline(!newStatus); // revert on failure
+      } finally {
+        setStatusLoading(false);
+      }
+    }
+  };
 
   const tabs = [
     { key: "dashboard", label: "Dashboard" },
@@ -187,19 +287,83 @@ export default function DriverDashboard() {
           </div>
 
           <button
-            onClick={() => setIsOnline(!isOnline)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all tracking-wider uppercase"
+            onClick={toggleAvailability}
+            disabled={statusLoading}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all tracking-wider uppercase disabled:opacity-50"
             style={{
               background: isOnline ? "rgba(16, 185, 129, 0.08)" : "rgba(239, 68, 68, 0.08)",
               color: isOnline ? "var(--brand-success)" : "var(--brand-danger)",
               border: `1px solid ${isOnline ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)"}`,
             }}
           >
-            <Power className="w-3.5 h-3.5" />
+            {statusLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Power className="w-3.5 h-3.5" />}
             {isOnline ? "Go Offline" : "Go Online"}
           </button>
         </div>
       </header>
+
+      {/* Incoming Booking Modal */}
+      <AnimatePresence>
+        {incomingBooking && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-20 left-4 right-4 z-50 md:left-1/2 md:-translate-x-1/2 md:w-96"
+          >
+            <div className="bg-white rounded-2xl shadow-2xl border-2 border-brand-primary overflow-hidden">
+              <div className="bg-brand-primary/10 p-4 border-b border-brand-primary/20 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center">
+                    <Bell className="w-4 h-4 animate-bounce" />
+                  </div>
+                  <span className="font-bold text-brand-primary">New Request!</span>
+                </div>
+                <button onClick={() => setIncomingBooking(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-700">
+                    <IndianRupee className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 font-semibold">Estimated Fare</p>
+                    <p className="text-2xl font-mono font-bold text-gray-900">₹{incomingBooking.fareEstimate}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-6 bg-gray-50 p-4 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-brand-success mt-0.5" />
+                    <div>
+                      <p className="text-xs text-gray-500 font-semibold">Pickup</p>
+                      <p className="text-sm font-bold text-gray-800 line-clamp-1">{incomingBooking.pickupLocation?.address || "Selected Location"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Navigation className="w-4 h-4 text-brand-secondary mt-0.5" />
+                    <div>
+                      <p className="text-xs text-gray-500 font-semibold">Dropoff</p>
+                      <p className="text-sm font-bold text-gray-800 line-clamp-1">{incomingBooking.dropoffLocation?.address || "Selected Location"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => setIncomingBooking(null)} className="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                    Reject
+                  </button>
+                  <button onClick={handleAcceptBooking} className="flex-1 py-3 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-secondary transition-colors shadow-lg shadow-blue-500/30">
+                    Accept Request
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tab Nav */}
       <div className="container-wide py-6">
@@ -257,10 +421,10 @@ export default function DriverDashboard() {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { label: "Today's Earnings", value: `₹${mockEarnings.today.toLocaleString()}`, icon: <IndianRupee className="w-5 h-5" />, color: "var(--brand-success)" },
-                { label: "Trips Today",      value: mockEarnings.tripCount.toString(),          icon: <Truck className="w-5 h-5" />,       color: "var(--brand-primary)" },
-                { label: "This Week",        value: `₹${mockEarnings.thisWeek.toLocaleString()}`, icon: <TrendingUp className="w-5 h-5" />, color: "var(--brand-secondary)" },
-                { label: "This Month",       value: `₹${mockEarnings.thisMonth.toLocaleString()}`, icon: <Calendar className="w-5 h-5" />, color: "var(--brand-accent)" },
+                { label: "Today's Earnings", value: `₹${earnings.today.toLocaleString()}`, icon: <IndianRupee className="w-5 h-5" />, color: "var(--brand-success)" },
+                { label: "Trips Today",      value: earnings.tripCount.toString(),          icon: <Truck className="w-5 h-5" />,       color: "var(--brand-primary)" },
+                { label: "This Week",        value: `₹${earnings.thisWeek.toLocaleString()}`, icon: <TrendingUp className="w-5 h-5" />, color: "var(--brand-secondary)" },
+                { label: "This Month",       value: `₹${earnings.thisMonth.toLocaleString()}`, icon: <Calendar className="w-5 h-5" />, color: "var(--brand-accent)" },
               ].map((stat, i) => (
                 <motion.div key={stat.label} className="glass-card p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                   <div className="flex items-center justify-between mb-4">
@@ -287,6 +451,53 @@ export default function DriverDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Active Booking */}
+            {activeBooking && (
+              <div className="glass-card p-6 border border-brand-primary/20 bg-brand-primary/5">
+                <h3 className="font-display text-lg font-bold mb-4 tracking-tight text-brand-primary flex items-center gap-2">
+                  <Truck className="w-5 h-5" /> Active Trip
+                </h3>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Booking Ref</p>
+                      <p className="font-mono font-bold text-gray-900">{activeBooking.id}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Est. Fare</p>
+                      <p className="font-mono font-bold text-gray-900 text-lg text-emerald-600">₹{activeBooking.fareEstimate}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-4 h-4 text-brand-success mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 font-semibold">Pickup</p>
+                        <p className="text-sm font-bold text-gray-800">{activeBooking.pickupLocation?.address || "Selected Location"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Navigation className="w-4 h-4 text-brand-secondary mt-0.5" />
+                      <div>
+                        <p className="text-xs text-gray-500 font-semibold">Dropoff</p>
+                        <p className="text-sm font-bold text-gray-800">{activeBooking.dropoffLocation?.address || "Selected Location"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button onClick={handleCancelBooking} className="flex-1 py-2.5 rounded-xl border border-red-200 text-red-600 font-bold bg-red-50 hover:bg-red-100 transition-colors text-sm">
+                      Cancel Trip
+                    </button>
+                    <button onClick={handleCompleteBooking} className="flex-[2] py-2.5 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-secondary transition-colors text-sm">
+                      Mark as Delivered
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="glass-card p-6">
               <h3 className="font-display text-lg font-bold mb-4 tracking-tight" style={{ color: "var(--text-primary)" }}>Today&apos;s Trips</h3>
@@ -322,7 +533,7 @@ export default function DriverDashboard() {
             <h2 className="font-display text-2xl font-bold mb-6 tracking-tight text-gray-800">Earnings Overview</h2>
             <div className="text-center p-8 rounded-2xl mb-8 border border-blue-100" style={{ background: "linear-gradient(135deg, rgba(2, 89, 221, 0.06), rgba(132, 175, 251, 0.03))" }}>
               <p className="text-xs font-bold uppercase tracking-wider text-gray-400">This Month</p>
-              <p className="font-mono text-5xl font-bold mt-2 text-gray-800">₹{mockEarnings.thisMonth.toLocaleString()}</p>
+              <p className="font-mono text-5xl font-bold mt-2 text-gray-800">₹{earnings.thisMonth.toLocaleString()}</p>
               <p className="text-xs font-bold mt-3 text-emerald-600 flex items-center justify-center gap-1">
                 <TrendingUp className="w-4 h-4" /> +18% vs last month
               </p>
