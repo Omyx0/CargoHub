@@ -65,6 +65,23 @@ router.get('/driver/active',
   }
 );
 
+// Get available jobs for drivers (DRIVER only)
+router.get('/driver/available',
+  verifyFirebaseToken,
+  requireRole('DRIVER'),
+  async (req, res) => {
+    try {
+      // In a real app, we might filter by the driver's vehicle type or current coordinates.
+      // For now, we return all PENDING bookings.
+      const bookings = await db.bookings.findAvailable();
+      res.json({ success: true, data: bookings });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
+    }
+  }
+);
+
 // Get user booking stats (USER only)
 router.get('/stats',
   verifyFirebaseToken,
@@ -157,6 +174,26 @@ router.patch('/:id/cancel',
         cancellationFee: hasFee ? 50 : 0,
       });
     } catch (err) {
+      res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
+    }
+  }
+);
+
+// Get driver's booking history (DRIVER only)
+router.get('/driver/history',
+  verifyFirebaseToken,
+  requireRole('DRIVER'),
+  requireVerifiedKyc,
+  async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const status = req.query.status as string | undefined;
+
+      const result = await db.bookings.findByDriverId(req.user!.uid, page, limit, status as any);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      console.error('Driver History Error:', err);
       res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
     }
   }

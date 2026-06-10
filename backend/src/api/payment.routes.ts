@@ -100,7 +100,7 @@ router.post('/verify',
 
       // Find booking 
       const allBookings = await db.bookings.findByUserId(req.user!.uid);
-      const booking = allBookings.data.find(b => b.paymentStatus === 'PENDING');
+      const booking = allBookings.data.find((b: any) => b.paymentStatus === 'PENDING');
 
       if (booking) {
         await db.bookings.update(booking.id, {

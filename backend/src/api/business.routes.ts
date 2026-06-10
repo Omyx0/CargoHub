@@ -88,8 +88,8 @@ router.get('/invoices', async (req, res) => {
 
   const result = await db.bookings.findByUserId(req.user!.uid, page, limit);
   const invoices = result.data
-    .filter(b => b.paymentStatus === 'PAID')
-    .map(b => ({
+    .filter((b: any) => b.paymentStatus === 'PAID')
+    .map((b: any) => ({
       id: b.id,
       bookingRef: b.bookingRef,
       amount: b.finalFare || b.fareEstimate,

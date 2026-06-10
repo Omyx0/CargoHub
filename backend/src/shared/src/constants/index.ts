@@ -153,23 +153,29 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, {
     color: '#8B5CF6',
     step: 3,
   },
+  ARRIVED: {
+    label: 'Arrived',
+    description: 'Driver has arrived at pickup location',
+    color: '#EC4899',
+    step: 4,
+  },
   PICKED_UP: {
     label: 'Picked Up',
     description: 'Cargo has been loaded',
     color: '#6366F1',
-    step: 4,
+    step: 5,
   },
   IN_TRANSIT: {
     label: 'In Transit',
     description: 'Cargo is on the way to destination',
     color: '#0EA5E9',
-    step: 5,
+    step: 6,
   },
   DELIVERED: {
     label: 'Delivered',
     description: 'Cargo has been delivered successfully',
     color: '#10B981',
-    step: 6,
+    step: 7,
   },
   CANCELLED: {
     label: 'Cancelled',
@@ -184,7 +190,8 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, {
 export const VALID_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   PENDING: ['ACCEPTED', 'CANCELLED'],
   ACCEPTED: ['DRIVER_ARRIVING', 'CANCELLED'],
-  DRIVER_ARRIVING: ['PICKED_UP', 'CANCELLED'],
+  DRIVER_ARRIVING: ['ARRIVED', 'CANCELLED'],
+  ARRIVED: ['PICKED_UP', 'CANCELLED'],
   PICKED_UP: ['IN_TRANSIT'],
   IN_TRANSIT: ['DELIVERED'],
   DELIVERED: [],

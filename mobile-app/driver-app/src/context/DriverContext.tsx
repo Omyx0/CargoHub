@@ -11,6 +11,8 @@ interface DriverContextType {
   refreshDriverData: () => Promise<void>;
   toggleOnlineStatus: (status: boolean) => Promise<boolean>;
   setActiveBooking: (booking: any | null) => void;
+  draftBooking: any | null;
+  setDraftBooking: (booking: any | null) => void;
 }
 
 const DriverContext = createContext<DriverContextType | undefined>(undefined);
@@ -19,6 +21,7 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { user } = useAuth();
   const [driver, setDriver] = useState<any | null>(null);
   const [activeBooking, setActiveBooking] = useState<any | null>(null);
+  const [draftBooking, setDraftBooking] = useState<any | null>(null);
   const [isOnline, setIsOnline] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +34,7 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setDriver(response.data.data);
         setIsOnline(response.data.data.isAvailable);
       }
-      const activeResp = await api.get('/bookings/active');
+      const activeResp = await api.get('/bookings/driver/active');
       if (activeResp.data?.data) setActiveBooking(activeResp.data.data);
     } catch (error) {
       console.log('Error fetching driver data', error);
@@ -67,7 +70,7 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <DriverContext.Provider value={{ driver, activeBooking, isOnline, isLoading, refreshDriverData: fetchDriverData, toggleOnlineStatus, setActiveBooking }}>
+    <DriverContext.Provider value={{ driver, activeBooking, isOnline, isLoading, refreshDriverData: fetchDriverData, toggleOnlineStatus, setActiveBooking, draftBooking, setDraftBooking }}>
       {children}
     </DriverContext.Provider>
   );

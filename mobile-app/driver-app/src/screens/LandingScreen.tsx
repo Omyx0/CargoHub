@@ -2,8 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity, Easing } from 'react-native';
 import { theme } from '../theme/theme';
 import { GradientButton } from '../components/GradientButton';
-import { Truck, ChevronDown } from 'lucide-react-native';
+import { Truck as TruckIcon, ChevronDown as ChevronDownIcon } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
+
+const Truck = TruckIcon as any;
+const ChevronDown = ChevronDownIcon as any;
 
 const { width } = Dimensions.get('window');
 
@@ -24,7 +27,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ navigation }) => {
         toValue: width + 50,
         duration: 4500,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: true,
+        useNativeDriver: false,
       })
     ).start();
 
@@ -34,7 +37,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ navigation }) => {
         toValue: -40,
         duration: 800,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: false,
       })
     ).start();
 
@@ -45,13 +48,13 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ navigation }) => {
           toValue: 6,
           duration: 1000,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(bounceAnim, {
           toValue: 0,
           duration: 1000,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ])
     ).start();
@@ -60,7 +63,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ navigation }) => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1200,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, []);
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, IndianRupee, User } from 'lucide-react-native';
+import { Home, IndianRupee, User, Search } from 'lucide-react-native';
 import { theme } from '../theme/theme';
 
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { EarningsScreen } from '../screens/EarningsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { JobScreen } from '../screens/JobScreen';
+import { AvailableJobsScreen } from '../screens/AvailableJobsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -32,6 +33,7 @@ const TabNavigator = () => {
       }}
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{ title: 'Home', tabBarIcon: ({ color }) => <Home color={color} size={24} /> }} />
+      <Tab.Screen name="FindJobTab" component={AvailableJobsScreen} options={{ title: 'Find Jobs', tabBarIcon: ({ color }) => <Search color={color} size={24} /> }} />
       <Tab.Screen name="EarningsTab" component={EarningsScreen} options={{ title: 'Earnings', tabBarIcon: ({ color }) => <IndianRupee color={color} size={24} /> }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Profile', tabBarIcon: ({ color }) => <User color={color} size={24} /> }} />
     </Tab.Navigator>

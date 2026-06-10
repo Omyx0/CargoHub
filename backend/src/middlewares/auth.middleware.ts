@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { auth } from '../config/firebase';
 import { db } from '../config/database';
+import jwt from 'jsonwebtoken';
 
 export const decodeFirebaseToken = async (
   req: Request,
@@ -39,12 +40,20 @@ export const decodeFirebaseToken = async (
     req.user = { uid: decodedToken.uid, email: decodedToken.email } as any;
     next();
   } catch (error) {
-    console.error('Firebase token verification failed:', error);
-    res.status(401).json({
-      success: false,
-      error: 'INVALID_TOKEN',
-      message: 'Invalid or expired authentication token.',
-    });
+    // Fallback: try decoding as custom JWT
+    try {
+      const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_development_only';
+      const decoded: any = jwt.verify(token, jwtSecret);
+      req.user = { uid: decoded.uid, email: decoded.phone } as any;
+      return next();
+    } catch (jwtError) {
+      console.error('Firebase and Custom JWT verification failed:', error, jwtError);
+      res.status(401).json({
+        success: false,
+        error: 'INVALID_TOKEN',
+        message: 'Invalid or expired authentication token.',
+      });
+    }
   }
 };
 
@@ -81,8 +90,16 @@ export const verifyFirebaseToken = async (
   }
 
   try {
-    const decodedToken = await auth.verifyIdToken(token);
-    const uid = decodedToken.uid;
+    let uid;
+    try {
+      const decodedToken = await auth.verifyIdToken(token);
+      uid = decodedToken.uid;
+    } catch (fbError) {
+      // Fallback: try decoding as custom JWT
+      const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_development_only';
+      const decoded: any = jwt.verify(token, jwtSecret);
+      uid = decoded.uid;
+    }
 
     // Look up user in database
     const user = await db.users.findByFirebaseUid(uid);

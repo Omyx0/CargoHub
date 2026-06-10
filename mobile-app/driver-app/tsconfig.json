@@ -4,13 +4,6 @@
     "strict": true,
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
-    "paths": {
-      "react": ["./node_modules/@types/react", "./node_modules/react"],
-      "react-native": ["./node_modules/react-native"],
-      "react-native-svg": ["./node_modules/react-native-svg"]
-    }
+    "module": "ESNext"
   }
 }

@@ -18,15 +18,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('[DEBUG] checkAuth started');
       try {
+        console.log('[DEBUG] getting token from AsyncStorage');
         const token = await AsyncStorage.getItem('@cargohub_driver_token');
+        console.log('[DEBUG] Token:', token ? 'exists' : 'null');
         if (token) {
+          console.log('[DEBUG] Fetching /auth/me');
           const response = await api.get('/auth/me');
+          console.log('[DEBUG] /auth/me response:', response.data);
           if (response.data?.data) setUser(response.data.data);
         }
       } catch (error) {
-        console.log('No active session or session expired');
+        console.log('[DEBUG] No active session or session expired', error);
       } finally {
+        console.log('[DEBUG] checkAuth finished, setting isLoading = false');
         setIsLoading(false);
       }
     };

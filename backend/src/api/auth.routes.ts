@@ -5,6 +5,9 @@ import { verifyFirebaseToken, decodeFirebaseToken } from '../middlewares/auth.mi
 import { validate } from '../middlewares/validate.middleware';
 import { RegisterUserSchema, RegisterDriverSchema, RegisterTokensSchema } from '@cargohub/shared';
 import { strictLimiter } from '../middlewares/rateLimit.middleware';
+import { auth } from '../config/firebase';
+import { sendSMS } from '../config/services';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
@@ -176,6 +179,165 @@ router.put('/me', verifyFirebaseToken, async (req, res) => {
   } catch (error: any) {
     console.error('Update Profile Error:', error);
     res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+});
+
+// Verify Firebase Auth token and check if the user is new
+router.post('/verify', async (req, res) => {
+  try {
+    const { token, phone, uid } = req.body;
+    
+    if (!token) {
+      res.status(400).json({ success: false, error: 'Token is required' });
+      return;
+    }
+
+    let firebaseUid = uid;
+    let firebasePhone = phone;
+
+    // Verify token using Firebase Admin if enabled/configured
+    if (auth && process.env.TEST_MODE !== 'true') {
+      try {
+        const decodedToken = await auth.verifyIdToken(token);
+        firebaseUid = decodedToken.uid;
+        firebasePhone = decodedToken.phone || phone;
+      } catch (err) {
+        console.error('Firebase token verify error in /verify:', err);
+        // Fallback for development if token is mock
+        if (process.env.NODE_ENV !== 'production' && token === uid) {
+          firebaseUid = uid;
+        } else {
+          res.status(401).json({ success: false, error: 'INVALID_TOKEN' });
+          return;
+        }
+      }
+    }
+
+    // Look up user in database
+    const user = await db.users.findByFirebaseUid(firebaseUid);
+    
+    if (user) {
+      // User exists, if driver check if driver profile exists
+      let driver = null;
+      if (user.role === 'DRIVER') {
+        driver = await db.drivers.findByFirebaseUid(firebaseUid);
+      }
+      res.json({
+        success: true,
+        data: {
+          token: token,
+          isNewUser: false,
+          user: { ...user, driver }
+        }
+      });
+    } else {
+      // New User
+      res.json({
+        success: true,
+        data: {
+          token: token,
+          isNewUser: true
+        }
+      });
+    }
+  } catch (error: any) {
+    console.error('Auth Verify Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to verify auth token' });
+  }
+});
+
+// ── Custom OTP Backend Auth ──────────────────────────────────────────────────
+
+// Send OTP
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      res.status(400).json({ success: false, error: 'Phone number is required' });
+      return;
+    }
+
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save to Redis (expires in 5 minutes)
+    await db.authOTP.setOTP(phone, otp);
+
+    // Try sending SMS if configured
+    if (process.env.MSG91_AUTH_KEY) {
+      // Using generic template ID 1 for now, or whatever is configured
+      await sendSMS(phone, '1', { otp });
+      console.log(`[AUTH] Sent real SMS OTP to ${phone}`);
+    } else {
+      // Fallback for development: Print to console
+      console.log(`\n\n=========================================\n`);
+      console.log(`📱 MOCK SMS OTP FOR ${phone}: [ ${otp} ]`);
+      console.log(`\n=========================================\n\n`);
+    }
+
+    res.json({ success: true, message: 'OTP sent successfully' });
+  } catch (error: any) {
+    console.error('Send OTP Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to send OTP' });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { phone, code } = req.body;
+    if (!phone || !code) {
+      res.status(400).json({ success: false, error: 'Phone and code are required' });
+      return;
+    }
+
+    // Validate OTP
+    const savedOtp = await db.authOTP.getOTP(phone);
+    if (!savedOtp || savedOtp !== code) {
+      // If development fallback (123456 with test numbers)
+      if (!(process.env.NODE_ENV !== 'production' && code === '123456')) {
+        res.status(401).json({ success: false, error: 'Invalid or expired OTP' });
+        return;
+      }
+    }
+
+    // OTP matched. Clear it.
+    await db.authOTP.deleteOTP(phone);
+
+    // Look up user by phone. 
+    // Wait, our db.users doesn't have a direct findByPhone right now, we can check if they exist.
+    // For now we can use a custom unique ID based on phone as firebaseUid.
+    const firebaseUid = `phone|${phone.replace('+', '')}`;
+    const user = await db.users.findByFirebaseUid(firebaseUid);
+
+    let isNewUser = !user;
+    let driver = null;
+
+    if (user && user.role === 'DRIVER') {
+      driver = await db.drivers.findByFirebaseUid(firebaseUid);
+    }
+
+    // Generate custom JWT
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_development_only';
+    const token = jwt.sign(
+      { uid: firebaseUid, phone, role: user?.role || 'USER' },
+      jwtSecret,
+      { expiresIn: '30d' }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        token: token,
+        uid: firebaseUid,
+        isNewUser,
+        user: user ? { ...user, driver } : null
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Verify OTP Error:', error);
+    res.status(500).json({ success: false, error: 'Failed to verify OTP' });
   }
 });
 

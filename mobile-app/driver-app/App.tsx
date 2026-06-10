@@ -14,14 +14,18 @@ export default function App() {
 
   useEffect(() => {
     async function prepare() {
+      console.log('[DEBUG] App prepare started');
       try {
         // Prepare any resources here
       } catch (e) {
         console.warn(e);
       } finally {
+        console.log('[DEBUG] Setting fontsLoaded = true');
         setFontsLoaded(true);
         try {
+          console.log('[DEBUG] Hiding Splash Screen...');
           await SplashScreen.hideAsync();
+          console.log('[DEBUG] Splash Screen hidden');
         } catch (splashErr) {
           console.warn('SplashScreen hide failed:', splashErr);
         }

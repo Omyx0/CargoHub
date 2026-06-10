@@ -3,6 +3,7 @@ import { View, StyleSheet, Text, Linking, Image, Alert, Animated, Easing, Dimens
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { theme } from '../theme/theme';
 import { useDriver } from '../context/DriverContext';
+import { useSocket } from '../context/SocketContext';
 import { StepIndicator } from '../components/StepIndicator';
 import { GradientButton } from '../components/GradientButton';
 import { Header } from '../components/Header';
@@ -27,12 +28,59 @@ const darkMapStyle = [
 
 export const JobScreen = () => {
   const { activeBooking, setActiveBooking, driver } = useDriver();
-  const [step, setStep] = useState(0);
+  const { socket } = useSocket();
   const [deliveryPhoto, setDeliveryPhoto] = useState<string | null>(null);
   
   // Animation values for Completed Celebration Screen
   const checkScale = useRef(new Animated.Value(0)).current;
   const contentFade = useRef(new Animated.Value(0)).current;
+
+  // Determine current step index based on activeBooking status and deliveryPhoto
+  const getStepFromStatus = () => {
+    if (!activeBooking) return 0;
+    switch (activeBooking.status) {
+      case 'ACCEPTED':
+      case 'DRIVER_ARRIVING':
+        return 0;
+      case 'ARRIVED':
+      case 'PICKED_UP':
+        return 1;
+      case 'IN_TRANSIT':
+        return deliveryPhoto ? 3 : 2;
+      case 'DELIVERED':
+        return 4;
+      default:
+        return 0;
+    }
+  };
+
+  const step = getStepFromStatus();
+
+  // Auto-transition ACCEPTED to DRIVER_ARRIVING and listen to cancellation
+  useEffect(() => {
+    if (!activeBooking || !socket) return;
+
+    // Join the booking room
+    socket.emit('join:booking', { bookingId: activeBooking.id });
+
+    // Auto-transition from ACCEPTED to DRIVER_ARRIVING
+    if (activeBooking.status === 'ACCEPTED') {
+      socket.emit('booking:status', { bookingId: activeBooking.id, status: 'DRIVER_ARRIVING' });
+      setActiveBooking((prev: any) => prev ? { ...prev, status: 'DRIVER_ARRIVING' } : null);
+    }
+
+    // Listen to cancellations
+    const handleCancelled = (data: any) => {
+      Alert.alert('Booking Cancelled', `This booking was cancelled: ${data.reason || 'No reason provided.'}`);
+      setActiveBooking(null);
+    };
+
+    socket.on('booking:cancelled', handleCancelled);
+
+    return () => {
+      socket.off('booking:cancelled', handleCancelled);
+    };
+  }, [socket, activeBooking?.id]);
 
   useEffect(() => {
     if (step === 4) {
@@ -57,10 +105,17 @@ export const JobScreen = () => {
   if (!activeBooking) return null;
 
   const handleNextStep = async () => {
+    if (!socket) return;
+
     if (step === 0) {
-      setStep(1); // Heading -> Arrived
+      // Heading -> Arrived
+      socket.emit('booking:status', { bookingId: activeBooking.id, status: 'ARRIVED' });
+      setActiveBooking((prev: any) => prev ? { ...prev, status: 'ARRIVED' } : null);
     } else if (step === 1) {
-      setStep(2); // Arrived -> In Transit
+      // Arrived -> Picked Up -> In Transit
+      socket.emit('booking:status', { bookingId: activeBooking.id, status: 'PICKED_UP' });
+      socket.emit('booking:status', { bookingId: activeBooking.id, status: 'IN_TRANSIT' });
+      setActiveBooking((prev: any) => prev ? { ...prev, status: 'IN_TRANSIT' } : null);
     } else if (step === 2) {
       // Stage 2: In Transit -> Upload Delivery Photo
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -76,10 +131,11 @@ export const JobScreen = () => {
 
       if (!result.canceled && result.assets && result.assets[0]) {
         setDeliveryPhoto(result.assets[0].uri);
-        setStep(3); // Advance to ready-to-complete state
       }
     } else if (step === 3) {
-      setStep(4); // Completed celebration screen
+      // In Transit (with Photo) -> Delivered
+      socket.emit('booking:status', { bookingId: activeBooking.id, status: 'DELIVERED' });
+      setActiveBooking((prev: any) => prev ? { ...prev, status: 'DELIVERED' } : null);
     }
   };
 

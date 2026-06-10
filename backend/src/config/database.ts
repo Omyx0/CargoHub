@@ -23,6 +23,33 @@ const toSnake = (obj: any) => {
   return newObj;
 };
 
+const formatDriver = (data: any): DriverProfile | null => {
+  if (!data) return null;
+  const camel = toCamel(data);
+  return {
+    ...camel,
+    earnings: {
+      today: Number(camel.earningsToday || 0),
+      thisWeek: Number(camel.earningsThisWeek || 0),
+      thisMonth: Number(camel.earningsThisMonth || 0),
+      tripCount: Number(camel.earningsTripCount || 0),
+    }
+  } as DriverProfile;
+};
+
+const flattenDriver = (driver: any) => {
+  if (!driver) return driver;
+  const { earnings, ...rest } = driver;
+  const flat = { ...rest };
+  if (earnings) {
+    flat.earningsToday = earnings.today;
+    flat.earningsThisWeek = earnings.thisWeek;
+    flat.earningsThisMonth = earnings.thisMonth;
+    flat.earningsTripCount = earnings.tripCount;
+  }
+  return toSnake(flat);
+};
+
 export const db = {
   users: {
     findByFirebaseUid: async (uid: string): Promise<UserProfile | null> => {
@@ -46,27 +73,27 @@ export const db = {
     getAll: async () => {
       const { data, error } = await supabase.from('drivers').select('*');
       if (error) return [];
-      return (data || []).map(toCamel) as DriverProfile[];
+      return (data || []).map(formatDriver).filter(Boolean) as DriverProfile[];
     },
     findById: async (id: string): Promise<DriverProfile | null> => {
       const { data, error } = await supabase.from('drivers').select('*').eq('id', id).single();
       if (error) return null;
-      return toCamel(data) as DriverProfile;
+      return formatDriver(data);
     },
     findByFirebaseUid: async (uid: string): Promise<DriverProfile | null> => {
       const { data, error } = await supabase.from('drivers').select('*').eq('firebase_uid', uid).single();
       if (error) return null;
-      return toCamel(data) as DriverProfile;
+      return formatDriver(data);
     },
     create: async (driver: DriverProfile) => {
-      const { data, error } = await supabase.from('drivers').insert(toSnake(driver)).select().single();
+      const { data, error } = await supabase.from('drivers').insert(flattenDriver(driver)).select().single();
       if (error) throw error;
-      return toCamel(data);
+      return formatDriver(data);
     },
     update: async (uid: string, updates: Partial<DriverProfile>) => {
-      const { data, error } = await supabase.from('drivers').update(toSnake(updates)).eq('firebase_uid', uid).select().single();
+      const { data, error } = await supabase.from('drivers').update(flattenDriver(updates)).eq('firebase_uid', uid).select().single();
       if (error) throw error;
-      return toCamel(data);
+      return formatDriver(data);
     },
     findNearby: async (lat: number, lng: number, vehicleType?: VehicleType, radiusKm = 15) => {
       // Use Redis geospatial query for active drivers
@@ -87,7 +114,10 @@ export const db = {
         const { data } = await supabase.from('drivers').select('*').eq('firebase_uid', driverId).single();
         if (data && data.is_available && data.kyc_status === 'VERIFIED') {
           if (!vehicleType || data.vehicle_type === vehicleType) {
-            drivers.push({ ...toCamel(data), distance });
+            const formatted = formatDriver(data);
+            if (formatted) {
+              drivers.push({ ...formatted, distance });
+            }
           }
         }
       }
@@ -141,6 +171,15 @@ export const db = {
         totalPages: Math.ceil((count || 0) / limit)
       };
     },
+    findAvailable: async () => {
+      const { data, error } = await supabase.from('bookings')
+        .select('*')
+        .eq('status', 'PENDING')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data || []).map(toCamel) as Booking[];
+    },
     findDriverActive: async (driverId: string) => {
       const { data, error } = await supabase.from('bookings')
         .select('*')
@@ -161,6 +200,21 @@ export const db = {
       const savedAddresses = 2; // Optional fallback for now
       
       return { totalBookings, activeShipments, totalSpent, savedAddresses };
+    },
+    findByDriverId: async (driverId: string, page = 1, limit = 20, status?: BookingStatus) => {
+      let query = supabase.from('bookings').select('*', { count: 'exact' }).eq('driver_id', driverId);
+      if (status) query = query.eq('status', status);
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
+      
+      if (error) throw error;
+      return {
+        data: data.map(toCamel),
+        total: count || 0,
+        page, limit,
+        totalPages: Math.ceil((count || 0) / limit)
+      };
     }
   },
 

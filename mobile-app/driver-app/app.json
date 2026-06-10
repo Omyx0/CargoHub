@@ -3,6 +3,7 @@
     "name": "CargoHub Driver",
     "slug": "cargohub-driver",
     "version": "1.0.0",
+    "newArchEnabled": true,
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {

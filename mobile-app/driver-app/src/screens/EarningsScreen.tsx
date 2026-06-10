@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { theme } from '../theme/theme';
 import { Header } from '../components/Header';
 import { useDriver } from '../context/DriverContext';
 import { Wallet, Calendar, ArrowUpRight, Award } from 'lucide-react-native';
+import { api } from '../services/api';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -23,26 +24,40 @@ const monthlyChartData = [
   { label: 'Wk 4', earnings: 18600 },
 ];
 
-interface MockTrip {
-  date: string;
-  route: string;
-  fare: number;
-  cargo: string;
-}
-
-const mockTrips: MockTrip[] = [
-  { date: 'Today, 03:15 PM', route: 'Koramangala ➔ Indiranagar', fare: 450, cargo: 'Box' },
-  { date: 'Yesterday, 11:30 AM', route: 'Whitefield ➔ HSR Layout', fare: 820, cargo: 'Pallet' },
-  { date: 'Jun 6, 04:45 PM', route: 'Marathahalli ➔ Electronic City', fare: 680, cargo: 'Cartons' },
-  { date: 'Jun 5, 01:20 PM', route: 'Domlur ➔ Kalyan Nagar', fare: 350, cargo: 'Furniture' },
-  { date: 'Jun 3, 09:00 AM', route: 'Jayanagar ➔ Malleshwaram', fare: 520, cargo: 'Electronics' },
-];
+const formatDate = (isoString: string) => {
+  try {
+    const d = new Date(isoString);
+    return d.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return isoString;
+  }
+};
 
 export const EarningsScreen = () => {
   const { driver } = useDriver();
   const [activeTab, setActiveTab] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly');
+  const [trips, setTrips] = useState<any[]>([]);
 
-  const earnings = driver?.earnings || { today: 1240, thisWeek: 8680, thisMonth: 45000, tripCount: 28 };
+  const earnings = driver?.earnings || { today: 0, thisWeek: 0, thisMonth: 0, tripCount: 0 };
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await api.get('/bookings/driver/history');
+        if (response.data?.data) {
+          setTrips(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching driver history:', err);
+      }
+    };
+    fetchHistory();
+  }, [driver]);
 
   const getChartData = () => {
     switch (activeTab) {
@@ -80,7 +95,7 @@ export const EarningsScreen = () => {
             );
           })}
         </View>
-
+ 
         {/* 3 Summary Stats Cards */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
@@ -96,7 +111,7 @@ export const EarningsScreen = () => {
             <Text style={[styles.statValue, { color: 'white' }]}>{earnings.tripCount}</Text>
           </View>
         </View>
-
+ 
         {/* Premium Bar Chart */}
         <View style={styles.chartCard}>
           <View style={styles.chartHeader}>
@@ -130,30 +145,30 @@ export const EarningsScreen = () => {
             })}
           </View>
         </View>
-
+ 
         {/* Recent Trips Header */}
         <Text style={styles.sectionTitle}>Recent Trips</Text>
-
+ 
         {/* Trips List */}
         <View style={styles.tripsList}>
-          {mockTrips.map((trip, idx) => (
+          {trips.map((trip, idx) => (
             <View key={idx} style={styles.tripRow}>
               <View style={styles.tripDetails}>
-                <Text style={styles.tripDate}>{trip.date}</Text>
-                <Text style={styles.tripRoute}>{trip.route}</Text>
+                <Text style={styles.tripDate}>{formatDate(trip.createdAt)}</Text>
+                <Text style={styles.tripRoute}>{trip.pickupAddress} ➔ {trip.dropAddress}</Text>
                 <View style={styles.cargoTag}>
-                  <Text style={styles.cargoTagText}>{trip.cargo}</Text>
+                  <Text style={styles.cargoTagText}>{trip.loadType}</Text>
                 </View>
               </View>
               
               <View style={styles.tripAction}>
-                <Text style={styles.tripFare}>+₹{trip.fare}</Text>
+                <Text style={styles.tripFare}>+₹{trip.finalFare || trip.fareEstimate}</Text>
                 <ArrowUpRight size={16} color={theme.colors.brand.secondary} />
               </View>
             </View>
           ))}
         </View>
-
+ 
       </ScrollView>
     </View>
   );

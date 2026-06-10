@@ -122,4 +122,48 @@ router.get('/:id/earnings',
   }
 );
 
+// Submit KYC documents (DRIVER only)
+router.post('/kyc/submit',
+  verifyFirebaseToken,
+  requireRole('DRIVER'),
+  async (req, res) => {
+    try {
+      // Update driver's KYC status to PENDING
+      const updated = await db.drivers.update(req.user!.uid, {
+        kycStatus: 'PENDING',
+      });
+      res.json({ success: true, data: updated, message: 'KYC documents submitted successfully' });
+    } catch (error: any) {
+      console.error('KYC Submit Error:', error);
+      res.status(500).json({ success: false, error: 'Failed to submit KYC' });
+    }
+  }
+);
+
+// Get driver profile details (DRIVER only or ADMIN)
+router.get('/:id',
+  verifyFirebaseToken,
+  async (req, res) => {
+    try {
+      if (req.user!.role !== 'ADMIN' && req.params.id !== req.user!.uid) {
+        res.status(403).json({ success: false, error: 'FORBIDDEN' });
+        return;
+      }
+
+      const driver = await db.drivers.findByFirebaseUid(req.params.id as string) ||
+        await db.drivers.findById(req.params.id as string);
+
+      if (!driver) {
+        res.status(404).json({ success: false, error: 'DRIVER_NOT_FOUND' });
+        return;
+      }
+
+      res.json({ success: true, data: driver });
+    } catch (error: any) {
+      console.error('Get Driver Profile Error:', error);
+      res.status(500).json({ success: false, error: 'INTERNAL_ERROR' });
+    }
+  }
+);
+
 export default router;

@@ -5,9 +5,11 @@ import { useDriver } from '../context/DriverContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { IncomingJobModal } from './IncomingJobModal';
+import { AvailableJobCard } from '../components/AvailableJobCard';
+import { api } from '../services/api';
 import { 
   User, Wallet, Clock, ShieldCheck, 
-  HelpCircle, Play, Power, Star, Truck 
+  HelpCircle, Play, Power, Star, Truck, MapPin 
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -82,6 +84,7 @@ export const HomeScreen = ({ navigation }: any) => {
     if (socket && isOnline) {
       const handleNewBooking = (booking: any) => {
         console.log('Received booking:new:', booking);
+        // Show modal for new incoming job
         setIncomingJob(booking);
         setModalVisible(true);
       };

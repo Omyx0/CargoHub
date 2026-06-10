@@ -56,6 +56,7 @@ export type BookingStatus =
   | 'PENDING'
   | 'ACCEPTED'
   | 'DRIVER_ARRIVING'
+  | 'ARRIVED'
   | 'PICKED_UP'
   | 'IN_TRANSIT'
   | 'DELIVERED'
