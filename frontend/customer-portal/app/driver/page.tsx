@@ -52,9 +52,9 @@ const driverSteps: WorkflowStep[] = [
   {
     num: 1,
     title: "Register / Login",
-    desc: "Phone OTP auth. Driver number validated against telecom registry. Role stored in Supabase.",
+    desc: "Email / Password auth. Role stored in PostgreSQL.",
     tags: [
-      { label: "Firebase OTP", type: "api-auth", icon: <Smartphone className="w-3 h-3" /> },
+      { label: "Firebase Auth", type: "api-auth", icon: <Smartphone className="w-3 h-3" /> },
       { label: "Abstract API", type: "api-sec",  icon: <CheckCircle2 className="w-3 h-3" /> },
     ],
   },
