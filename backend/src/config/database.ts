@@ -287,21 +287,5 @@ export const db = {
       console.log(`Setting notification tokens for ${uid}`, tokens);
       return true;
     }
-  },
-
-  authOTP: {
-    setOTP: async (phone: string, otp: string) => {
-      if (!redis) throw new Error("Redis unavailable");
-      // 5 minute expiration
-      await redis.set(`otp:${phone}`, otp, { ex: 300 });
-    },
-    getOTP: async (phone: string) => {
-      if (!redis) return null;
-      return await redis.get<string>(`otp:${phone}`);
-    },
-    deleteOTP: async (phone: string) => {
-      if (!redis) return;
-      await redis.del(`otp:${phone}`);
-    }
   }
 };
