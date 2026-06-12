@@ -103,7 +103,7 @@ export default function SettingsPage() {
     }
   };
 
-  const initials = user?.name ? user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() : "U";
+  const initials = user?.name ? user.name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() : "U";
 
   return (
     <div className="space-y-6 max-w-4xl">

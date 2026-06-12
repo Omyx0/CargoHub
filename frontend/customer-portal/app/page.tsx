@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Truck, MapPin, Shield, Zap, ChevronRight, Star, Clock,
   ArrowRight, Package, Users, BarChart3, Phone, Globe,
-  CheckCircle2, IndianRupee, Navigation, Smartphone, Play, Image as ImageIcon
+  CheckCircle2, IndianRupee, Navigation, Smartphone, Play, Image as ImageIcon, Settings, LogOut
 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "./icon.jpeg";
@@ -120,6 +121,18 @@ const steps = [
 
 export default function LandingPage() {
   const [activeVehicle, setActiveVehicle] = useState(0);
+  const { user } = useAuthStore();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      const { auth } = await import('@/lib/firebase');
+      await auth.signOut();
+      window.location.href = '/';
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
@@ -154,19 +167,66 @@ export default function LandingPage() {
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
+            {user ? (
+              <div 
+                className="relative"
+                onMouseEnter={() => setShowProfileMenu(true)}
+                onMouseLeave={() => setShowProfileMenu(false)}
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-full border cursor-pointer overflow-hidden" style={{ borderColor: "var(--border-subtle)" }}>
+                  {user.profilePhoto ? (
+                    <img src={user.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center font-bold text-sm" style={{ color: "var(--brand-primary)" }}>
+                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {showProfileMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full right-0 mt-2 bg-[var(--bg-primary)] border shadow-lg rounded-xl overflow-hidden w-48"
+                      style={{ borderColor: "var(--border-subtle)", zIndex: 100 }}
+                    >
+                      <Link 
+                        href="/dashboard/settings" 
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors text-[var(--text-primary)]"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span className="text-sm font-medium">View Profile</span>
+                      </Link>
+                      <div className="h-px w-full" style={{ background: "var(--border-subtle)" }} />
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-500 transition-colors w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span className="text-sm font-medium">Logout</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="text-[14px] font-semibold transition-colors px-4 py-2"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                Log In
+              </Link>
+            )}
             <Link
-              href="/login"
-              className="text-[14px] font-semibold transition-colors px-4 py-2"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Log In
-            </Link>
-            <Link
-              href="/book"
-              className="text-[14px] font-bold text-white px-5 py-2.5 shadow-sm transition-opacity hover:opacity-90"
+              href={user ? "/dashboard" : "/book"}
+              className="text-[14px] font-bold text-white px-5 py-2.5 shadow-sm transition-opacity hover:opacity-90 whitespace-nowrap"
               style={{ background: "var(--brand-primary)", borderRadius: "4px" }}
             >
-              Book Now
+              {user ? "Dashboard" : "Book Now"}
             </Link>
           </div>
         </div>
@@ -191,7 +251,7 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-8">
-                <Link href="/login" className="flex items-stretch text-sm font-bold shadow-[0_10px_40px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-shadow" style={{ background: "var(--bg-card)", color: "var(--text-primary)" }}>
+                <Link href="/register" className="flex items-stretch text-sm font-bold shadow-[0_10px_40px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.12)] transition-shadow" style={{ background: "var(--bg-card)", color: "var(--text-primary)" }}>
                   <span className="px-8 py-4 flex items-center">Get Started</span>
                   <div className="text-white px-5 flex items-center justify-center" style={{ background: "var(--text-primary)" }}>
                     <Play className="w-4 h-4 fill-white" />

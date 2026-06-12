@@ -211,36 +211,36 @@ export default function RegisterPage() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-8">
         <motion.div
-          className="w-full max-w-md"
+          className="w-full max-w-[520px]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {step === 1 ? (
             <>
               {/* Back to home */}
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-5">
                 <Link href="/" className="flex items-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
                   <ChevronLeft className="w-4 h-4" /> Back to home
                 </Link>
                 <ThemeToggle />
               </div>
 
-              <h1 className="font-display text-3xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+              <h1 className="font-display text-2xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
                 Create an account
               </h1>
-              <p className="text-sm mb-8" style={{ color: "var(--text-secondary)" }}>
+              <p className="text-sm mb-5" style={{ color: "var(--text-secondary)" }}>
                 Sign up to start managing your logistics today.
               </p>
 
               {/* Role toggle */}
-              <div className="flex p-1 mb-8" style={{ background: "var(--bg-tertiary)", borderRadius: "var(--radius-md)" }}>
+              <div className="flex p-1 mb-5" style={{ background: "var(--bg-tertiary)", borderRadius: "var(--radius-md)" }}>
                 {(["user", "driver"] as const).map((r) => (
                   <button
                     key={r}
                     onClick={() => setMode(r)}
-                    className="flex-1 py-2.5 text-sm font-semibold transition-all"
+                    className="flex-1 py-2 text-sm font-semibold transition-all"
                     style={{
                       background: mode === r ? "var(--brand-primary)" : "transparent",
                       color: mode === r ? "white" : "var(--text-muted)",
@@ -252,128 +252,134 @@ export default function RegisterPage() {
                 ))}
               </div>
 
-              {/* Name input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Full Name</label>
-                <div className="flex gap-2">
-                  <div className="input-field flex items-center justify-center" style={{ width: 50, textAlign: "center" }}>
-                    <User className="w-4 h-4 text-gray-500" />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Name input */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Full Name</label>
+                  <div className="flex gap-2">
+                    <div className="input-field flex items-center justify-center" style={{ width: 44, textAlign: "center" }}>
+                      <User className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Full name"
+                      className="input-field flex-1 min-w-0"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="input-field flex-1"
-                  />
+                </div>
+
+                {/* Email input */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Email Address</label>
+                  <div className="flex gap-2">
+                    <div className="input-field flex items-center justify-center" style={{ width: 44, textAlign: "center" }}>
+                      <Mail className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email address"
+                      className="input-field flex-1 min-w-0"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Email input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Email Address</label>
-                <div className="flex gap-2">
-                  <div className="input-field flex items-center justify-center" style={{ width: 50, textAlign: "center" }}>
-                    <Mail className="w-4 h-4 text-gray-500" />
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Gender input */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Gender</label>
+                  <div className="flex gap-2">
+                    <div className="input-field flex items-center justify-center" style={{ width: 44, textAlign: "center" }}>
+                      <User className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="input-field flex-1 min-w-0"
+                      style={{ backgroundColor: "transparent" }}
+                    >
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="input-field flex-1"
-                  />
+                </div>
+
+                {/* Phone input */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: "var(--text-secondary)" }}>Phone (Optional for Google)</label>
+                  <div className="flex gap-2">
+                    <div className="input-field flex items-center justify-center" style={{ width: 50, textAlign: "center", fontSize: "14px" }}>
+                      +91
+                    </div>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      placeholder="10-digit number"
+                      className="input-field flex-1 min-w-0"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Gender input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Gender</label>
-                <div className="flex gap-2">
-                  <div className="input-field flex items-center justify-center" style={{ width: 50, textAlign: "center" }}>
-                    <User className="w-4 h-4 text-gray-500" />
+              <div className="grid grid-cols-2 gap-4 mb-5">
+                {/* Password input */}
+                <div className="relative">
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Password</label>
+                  <div className="flex gap-2 relative">
+                    <div className="input-field flex items-center justify-center" style={{ width: 44, textAlign: "center" }}>
+                      <Lock className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min 6 chars"
+                      className="input-field flex-1 min-w-0 pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="input-field flex-1"
-                    style={{ backgroundColor: "transparent" }}
-                  >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
                 </div>
-              </div>
 
-              {/* Phone input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Phone Number (Optional for Google Signup)</label>
-                <div className="flex gap-2">
-                  <div className="input-field flex items-center justify-center" style={{ width: 70, textAlign: "center", fontSize: "14px" }}>
-                    +91
+                {/* Verify Password input */}
+                <div className="relative">
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Verify Password</label>
+                  <div className="flex gap-2 relative">
+                    <div className="input-field flex items-center justify-center" style={{ width: 44, textAlign: "center" }}>
+                      <Lock className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={verifyPassword}
+                      onChange={(e) => setVerifyPassword(e.target.value)}
+                      placeholder="Re-enter password"
+                      className="input-field flex-1 min-w-0"
+                    />
                   </div>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    placeholder="Enter 10-digit number"
-                    className="input-field flex-1"
-                  />
-                </div>
-              </div>
-
-              {/* Password input */}
-              <div className="mb-6 relative">
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Password</label>
-                <div className="flex gap-2 relative">
-                  <div className="input-field flex items-center justify-center" style={{ width: 50, textAlign: "center" }}>
-                    <Lock className="w-4 h-4 text-gray-500" />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create a password (min 6 chars)"
-                    className="input-field flex-1"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Verify Password input */}
-              <div className="mb-6 relative">
-                <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Verify Password</label>
-                <div className="flex gap-2 relative">
-                  <div className="input-field flex items-center justify-center" style={{ width: 50, textAlign: "center" }}>
-                    <Lock className="w-4 h-4 text-gray-500" />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={verifyPassword}
-                    onChange={(e) => setVerifyPassword(e.target.value)}
-                    placeholder="Re-enter password"
-                    className="input-field flex-1"
-                  />
                 </div>
               </div>
 
               <button
                 onClick={handleRegister}
-                className="btn-primary w-full mb-6"
-                style={{ padding: "14px", opacity: phone.length === 10 && name.length > 2 && password.length >= 6 && !loading ? 1 : 0.5 }}
+                className="btn-primary w-full mb-4"
+                style={{ padding: "12px", opacity: phone.length === 10 && name.length > 2 && password.length >= 6 && !loading ? 1 : 0.5 }}
                 disabled={phone.length !== 10 || name.length <= 2 || password.length < 6 || loading}
               >
                 {loading ? "Creating Account..." : "Create Account"} <ArrowRight className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4 mb-4">
                 <div className="flex-1 divider" />
                 <span className="text-xs" style={{ color: "var(--text-muted)" }}>OR</span>
                 <div className="flex-1 divider" />
@@ -382,7 +388,7 @@ export default function RegisterPage() {
               {/* Google sign-in */}
               <button 
                 onClick={handleGoogleSignup}
-                className="btn-secondary w-full" style={{ padding: "14px" }}
+                className="btn-secondary w-full" style={{ padding: "12px" }}
                 disabled={loading}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" className="inline-block mr-2"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
@@ -390,7 +396,7 @@ export default function RegisterPage() {
               </button>
 
               {/* Login link */}
-              <p className="text-sm text-center mt-8" style={{ color: "var(--text-muted)" }}>
+              <p className="text-sm text-center mt-5" style={{ color: "var(--text-muted)" }}>
                 Already have an account?{" "}
                 <Link href="/login" className="font-semibold" style={{ color: "var(--brand-primary-light)" }}>
                   Sign in

@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -29,6 +30,18 @@ export default function Sidebar() {
   const { isSidebarCollapsed, toggleSidebar, stats } = useDashboardStore();
   const { user } = useAuthStore();
   const resetBooking = useBookingStore(state => state.resetBooking);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   const handleLogout = async () => {
     try {
@@ -61,8 +74,9 @@ export default function Sidebar() {
 
       {/* Logo Area */}
       <div className={`h-20 flex items-center border-b ${isSidebarCollapsed ? "justify-center px-0" : "px-6"}`} style={{ borderColor: "var(--border-subtle)" }}>
-        <motion.div 
-          className="flex items-center gap-3"
+        <Link href="/">
+          <motion.div 
+            className="flex items-center gap-3 cursor-pointer"
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -85,6 +99,7 @@ export default function Sidebar() {
             </motion.span>
           )}
         </motion.div>
+        </Link>
       </div>
 
       {/* Nav Links */}
@@ -141,24 +156,63 @@ export default function Sidebar() {
           </div>
         )}
 
-        <button onClick={handleLogout} className={`flex items-center transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${isSidebarCollapsed ? "justify-center w-10 h-10 rounded-full" : "gap-3 px-4 py-2 w-full text-left rounded-xl"}`} style={{ color: "var(--text-secondary)" }}>
-          {user?.profilePhoto ? (
-            <img src={user.profilePhoto} alt="Profile" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center font-bold text-xs flex-shrink-0" style={{ color: "var(--brand-primary)" }}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-            </div>
-          )}
-          {!isSidebarCollapsed && (
-            <>
-              <div className="flex-1 whitespace-nowrap overflow-hidden">
-                <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{user?.name || "Loading..."}</p>
-                <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{user?.role === 'DRIVER' ? 'Driver' : 'Customer'}</p>
+        <div className="relative" ref={menuRef}>
+          <button 
+            onClick={() => setShowProfileMenu(!showProfileMenu)} 
+            className={`flex items-center transition-colors hover:bg-[var(--bg-secondary)] ${isSidebarCollapsed ? "justify-center w-10 h-10 rounded-full" : "gap-3 px-4 py-2 w-full text-left rounded-xl"} ${showProfileMenu ? "bg-[var(--bg-secondary)]" : ""}`} 
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {user?.profilePhoto ? (
+              <img src={user.profilePhoto} alt="Profile" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center font-bold text-xs flex-shrink-0" style={{ color: "var(--brand-primary)" }}>
+                {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
               </div>
-              <LogOut className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-            </>
-          )}
-        </button>
+            )}
+            {!isSidebarCollapsed && (
+              <>
+                <div className="flex-1 whitespace-nowrap overflow-hidden">
+                  <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{user?.name || "Loading..."}</p>
+                  <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{user?.role === 'DRIVER' ? 'Driver' : 'Customer'}</p>
+                </div>
+                {/* Optional indicator could go here */}
+              </>
+            )}
+          </button>
+          
+          <AnimatePresence>
+            {showProfileMenu && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className={`absolute bottom-full mb-2 bg-[var(--bg-primary)] border shadow-lg rounded-xl overflow-hidden ${isSidebarCollapsed ? "left-0 w-48" : "left-0 w-full"}`}
+                style={{ borderColor: "var(--border-subtle)", zIndex: 100 }}
+              >
+                <Link 
+                  href="/dashboard/settings" 
+                  onClick={() => setShowProfileMenu(false)}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors text-[var(--text-primary)]"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="text-sm font-medium">View Profile</span>
+                </Link>
+                <div className="h-px w-full" style={{ background: "var(--border-subtle)" }} />
+                <button 
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    handleLogout();
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-red-500/10 text-red-500 transition-colors w-full text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </motion.aside>
   );
