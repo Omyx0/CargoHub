@@ -6,7 +6,7 @@
   "workspaces": [
     "frontend/*",
     "backend",
-    "backend/src/shared",
+    "packages/shared",
     "mobile-app/*"
   ],
   "scripts": {
