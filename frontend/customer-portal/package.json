@@ -1,41 +1,41 @@
 {
-    "name":  "website",
-    "version":  "0.1.0",
-    "private":  true,
-    "scripts":  {
-                    "dev":  "next dev -p 4000",
-                    "build":  "next build",
-                    "start":  "next start",
-                    "lint":  "eslint",
-                    "prebuild":  "npm run build --workspace=@cargohub/shared"
-                },
-    "dependencies":  {
-                         "@cargohub/shared":  "*",
-                         "@types/maplibre-gl":  "^1.13.2",
-                         "axios":  "^1.9.0",
-                         "clsx":  "^2.1.1",
-                         "firebase":  "^12.14.0",
-                         "framer-motion":  "^12.12.1",
-                         "html2canvas":  "^1.4.1",
-                         "jspdf":  "^4.2.1",
-                         "lucide-react":  "^0.507.0",
-                         "maplibre-gl":  "^5.24.0",
-                         "next":  "15.1.4",
-                         "next-themes":  "^0.4.6",
-                         "react":  "^19.0.0",
-                         "react-dom":  "^19.0.0",
-                         "socket.io-client":  "^4.8.1",
-                         "tailwind-merge":  "^3.6.0",
-                         "zustand":  "^5.0.5"
-                     },
-    "devDependencies":  {
-                            "@tailwindcss/postcss":  "^4",
-                            "@types/node":  "^20",
-                            "@types/react":  "^19",
-                            "@types/react-dom":  "^19",
-                            "eslint":  "^9",
-                            "eslint-config-next":  "15.1.4",
-                            "tailwindcss":  "^4",
-                            "typescript":  "^5"
-                        }
+    "name": "website",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev -p 4000",
+        "build": "next build",
+        "start": "next start",
+        "lint": "eslint",
+        "prebuild": "npm run build --workspace=@cargohub/shared"
+    },
+    "dependencies": {
+        "@cargohub/shared": "*",
+        "@types/maplibre-gl": "^1.13.2",
+        "axios": "^1.9.0",
+        "clsx": "^2.1.1",
+        "firebase": "^12.14.0",
+        "framer-motion": "^12.12.1",
+        "html2canvas": "^1.4.1",
+        "jspdf": "^4.2.1",
+        "lucide-react": "^0.507.0",
+        "maplibre-gl": "^5.24.0",
+        "next": "^16.2.7",
+        "next-themes": "^0.4.6",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7",
+        "socket.io-client": "^4.8.1",
+        "tailwind-merge": "^3.6.0",
+        "zustand": "^5.0.5"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4",
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "eslint": "^9",
+        "eslint-config-next": "15.1.4",
+        "tailwindcss": "^4",
+        "typescript": "^5"
+    }
 }
