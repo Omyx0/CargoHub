@@ -3,8 +3,8 @@
 // Runs client-side for instant estimates, server-side for authoritative pricing
 // ============================================================================
 
-import type { FareBreakdown, FareEstimateInput } from '../types/index';
-import { VEHICLE_CONFIG, LOAD_CONFIG, FARE_CONSTANTS } from '../constants/index';
+import type { FareBreakdown, FareEstimateInput } from '../types';
+import { VEHICLE_CONFIG, LOAD_CONFIG, FARE_CONSTANTS } from '../constants';
 
 /**
  * Calculate Haversine distance between two coordinates in km.
@@ -109,4 +109,6 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+
 
