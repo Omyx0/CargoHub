@@ -3,7 +3,7 @@
 // Shared across backend, website, and mobile
 // ============================================================================
 
-import type { VehicleType, LoadType, BookingStatus } from '../types';
+import type { VehicleType, LoadType, BookingStatus } from '../types/index';
 
 // ── Vehicle Configuration ───────────────────────────────────────────────────
 
@@ -235,3 +235,4 @@ export const PAGINATION = {
 export const B2B_LIMITS = {
   MAX_BULK_BOOKINGS: 50,
 } as const;
+

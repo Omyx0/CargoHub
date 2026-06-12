@@ -3,7 +3,7 @@
 // Authoritative calculation logic for the platform pricing
 // ============================================================================
 
-import type { FareEstimateInput, FareBreakdown, VehicleType } from '../types';
+import type { FareEstimateInput, FareBreakdown, VehicleType } from '../types/index';
 
 export const VEHICLE_PRICING: Record<VehicleType, { baseFare: number; perKm: number }> = {
   MINI_PICKUP: { baseFare: 80, perKm: 12 },
@@ -127,3 +127,4 @@ export function formatCurrencySmart(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
